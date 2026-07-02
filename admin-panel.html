@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Admin Dashboard - Premium Control Center</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- BoxIcons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Socket.io Client (Will connect to backend) -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --bg-body: #030712; /* Very dark slate */
+            --bg-card: rgba(17, 24, 39, 0.6);
+            --border-card: rgba(55, 65, 81, 0.4);
+            --primary: #6366f1; /* Indigo */
+            --primary-hover: #4f46e5;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Glassmorphism Classes */
+        .glass {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-card);
+        }
+
+        .glass-header {
+            background: rgba(3, 7, 18, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-card);
+        }
+
+        /* Ambient glowing background */
+        .ambient-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .ambient-blob-1 {
+            position: absolute; top: -10%; left: -5%; width: 40vw; height: 40vw;
+            background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+            border-radius: 50%; filter: blur(60px);
+        }
+        .ambient-blob-2 {
+            position: absolute; bottom: -20%; right: -10%; width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+            border-radius: 50%; filter: blur(60px);
+        }
+        .ambient-blob-3 {
+            position: absolute; top: 40%; left: 50%; width: 30vw; height: 30vw; transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%);
+            border-radius: 50%; filter: blur(80px); pointer-events: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Loader */
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Table Styles */
+        table { border-collapse: separate; border-spacing: 0; }
+        th, td { border-bottom: 1px solid rgba(55,65,81,0.5); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: rgba(31, 41, 55, 0.4); }
+
+        .sidebar-link {
+            transition: all 0.3s ease;
+        }
+        .sidebar-link.active {
+            background: linear-gradient(90deg, rgba(99,102,241,0.15) 0%, transparent 100%);
+            border-left: 3px solid var(--primary);
+            color: #fff;
+            padding-left: 1.25rem;
+        }
+
+        /* Page Transitions */
+        .page-section {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        .page-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Nav search glow */
+        .search-input:focus {
+            box-shadow: 0 0 15px rgba(99,102,241,0.2);
+        }
+    </style>
+</head>
+
+<body class="antialiased flex h-screen text-sm">
+
+    <!-- Ambient Background -->
+    <div class="ambient-bg pointer-events-none">
+        <div class="ambient-blob-1"></div>
+        <div class="ambient-blob-2"></div>
+        <div class="ambient-blob-3"></div>
+    </div>
+
+    <!-- MAIN ACCESS GATE (Login / Verification logic overlay) -->
+    <div id="auth-gate" class="fixed inset-0 z-50 bg-[#030712] flex items-center justify-center transition-opacity duration-500">
+        <div class="glass p-10 rounded-2xl max-w-md w-full text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+            <div class="w-16 h-16 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+                <i class='bx bxs-lock-alt text-3xl'></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-2">Secure Admin Gateway</h1>
+            <p id="auth-status-text" class="text-slate-400 mb-6">Verifying your identity and permissions...</p>
+            <div id="auth-loader" class="loader w-10 h-10 mx-auto"></div>
+            
+            <div id="auth-error" class="hidden mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <p class="text-red-400 font-medium"><i class='bx bx-error-circle mr-2'></i>Access Denied.</p>
+                <p class="text-xs text-slate-500 mt-1">Administrator Permission Required.</p>
+                <button onclick="window.location.href='/'" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 text-white rounded-lg py-2 transition">Return Home</button>
+            </div>
+
+            <!-- Login Form (Hidden initially) -->
+            <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="hidden text-left mt-6 space-y-4">
+                <p class="text-xs text-indigo-400 mb-4 bg-indigo-500/10 p-2 rounded border border-indigo-500/20">System detects no backend. Please enter any email and password to enter UI DEMO mode securely.</p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5">Admin Email</label>
+                    <input type="email" id="adminEmail" required class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-lg px-4 py-3 text-white outline-none text-sm transition" placeholder="admin@mybusiness.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5">Master Password</label>
+                    <input type="password" id="adminPass" required class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-lg px-4 py-3 text-white outline-none text-sm transition" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-3 font-medium transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)] mt-2">Authenticate Session</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="w-[var(--sidebar-width)] h-full glass border-r border-t-0 border-b-0 border-l-0 flex flex-col z-40 relative flex-shrink-0">
+        <div class="p-6 flex items-center gap-3 border-b border-[var(--border-card)]">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 font-bold text-xl">
+                <i class='bx bxs-building-house'></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-tight uppercase">Control Center</h1>
+                <p class="text-[10px] text-emerald-400 font-semibold tracking-widest"><i class='bx bxs-circle text-[8px] animate-pulse mr-1'></i> LIVE SECURE SYSTEM</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
+            
+            <a href="#" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white" onclick="switchTab('dashboard')">
+                <i class='bx bxs-dashboard text-xl'></i>
+                <span class="font-medium">Dashboard Overview</span>
+            </a>
+            
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white" onclick="switchTab('users')">
+                <i class='bx bxs-user-detail text-xl'></i>
+                <span class="font-medium">User Management</span>
+            </a>
+            
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white" onclick="switchTab('deposits')">
+                <i class='bx transform rotate-90 bxs-log-in-circle text-xl'></i>
+                <span class="font-medium">Deposits</span>
+            </a>
+            
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white" onclick="switchTab('withdrawals')">
+                <i class='bx transform -rotate-90 bxs-log-out-circle text-xl'></i>
+                <span class="font-medium">Withdrawals</span>
+            </a>
+            
+
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white" onclick="switchTab('transactions')">
+                <i class='bx bx-transfer-alt text-xl'></i>
+                <span class="font-medium">Transactions History</span>
+            </a>
+
+            <div class="my-4 border-t border-[var(--border-card)]"></div>
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">System Config</p>
+
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white" onclick="switchTab('analytics')">
+                <i class='bx bxs-bar-chart-alt-2 text-xl'></i>
+                <span class="font-medium">Platform Analytics</span>
+            </a>
+            
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white" onclick="switchTab('settings')">
+                <i class='bx bxs-cog text-xl'></i>
+                <span class="font-medium">Global Settings</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-[var(--border-card)]">
+            <button onclick="logoutAdmin()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 py-3 rounded-xl transition-all font-medium border border-red-500/20">
+                <i class='bx bx-log-out'></i> Terminate Session
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- TOP NAV -->
+        <header class="glass-header h-20 px-8 flex items-center justify-between z-30 sticky top-0">
+            <div class="flex items-center gap-4 w-1/3">
+                <div class="relative w-full max-w-md group">
+                    <i class='bx bx-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-400 transition-colors'></i>
+                    <input type="text" placeholder="Global Search (Users, Txns, Settings)..." class="search-input w-full bg-slate-900/50 border border-slate-700/50 focus:border-indigo-500/50 rounded-xl pl-11 pr-4 py-2.5 text-sm outline-none transition-all placeholder:text-slate-500">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <!-- Server Status -->
+                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-teal-500/10 border border-teal-500/20">
+                    <div class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></div>
+                    <span class="text-xs font-semibold text-teal-400 tracking-wider">SOCKET CONNECTED</span>
+                </div>
+
+                <!-- Notifications -->
+                <button class="relative p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    <i class='bx bxs-bell ring-bell text-2xl'></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse"></span>
+                </button>
+
+                <!-- Profile -->
+                <div class="flex items-center gap-3 pl-4 border-l border-slate-800">
+                    <img src="https://ui-avatars.com/api/?name=Super+Admin&background=4f46e5&color=fff" class="w-10 h-10 rounded-xl border border-indigo-500/30">
+                    <div class="hidden lg:block">
+                        <p class="text-sm font-bold text-white">Super Admin</p>
+                        <p class="text-xs text-indigo-400 font-medium">Headmaster Role</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Page Container -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" id="pages-container">
+            
+            <!-- PAGE: DASHBOARD (HOME) -->
+            <section id="dashboard" class="page-section active max-w-7xl mx-auto space-y-6">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-1">Financial & User Overview</h2>
+                        <p class="text-slate-400 text-sm">Real-time statistics fed via enterprise websocket stream.</p>
+                    </div>
+                    <div>
+                        <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all">
+                            <i class='bx bx-cloud-download text-lg'></i> Generate PDF Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Financial Top Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="glass p-6 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-bl-full flex items-start justify-end p-4 group-hover:bg-indigo-500/20 transition-colors">
+                            <i class='bx bx-wallet text-3xl text-indigo-400'></i>
+                        </div>
+                        <p class="text-sm text-slate-400 font-medium mb-1">Total Platform Balance</p>
+                        <h3 class="text-3xl font-bold text-white mb-2" id="db-total-balance">$0.00</h3>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded flex items-center gap-1"><i class='bx bx-trending-up'></i> Live Sync</span>
+                        </div>
+                    </div>
+                    
+                    <div class="glass p-6 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full flex items-start justify-end p-4 group-hover:bg-emerald-500/20 transition-colors">
+                            <i class='bx bx-down-arrow-circle text-3xl text-emerald-400'></i>
+                        </div>
+                        <p class="text-sm text-slate-400 font-medium mb-1">Total Approved Deposits</p>
+                        <h3 class="text-3xl font-bold text-white mb-2" id="db-total-deposits">$0.00</h3>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded flex items-center gap-1">Today: <span id="db-today-deposits">$0.00</span></span>
+                        </div>
+                    </div>
+
+                    <div class="glass p-6 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-bl-full flex items-start justify-end p-4 group-hover:bg-amber-500/20 transition-colors">
+                            <i class='bx bx-up-arrow-circle text-3xl text-amber-400'></i>
+                        </div>
+                        <p class="text-sm text-slate-400 font-medium mb-1">Total Withdrawals</p>
+                        <h3 class="text-3xl font-bold text-white mb-2" id="db-total-withdrawals">$0.00</h3>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded flex items-center gap-1">Pending: <span id="db-pending-withdrawals">0</span></span>
+                        </div>
+                    </div>
+
+                    <div class="glass p-6 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-bl-full flex items-start justify-end p-4 group-hover:bg-purple-500/20 transition-colors">
+                            <i class='bx bxs-group text-3xl text-purple-400'></i>
+                        </div>
+                        <p class="text-sm text-slate-400 font-medium mb-1">Registered Users</p>
+                        <h3 class="text-3xl font-bold text-white mb-2" id="db-total-users">0</h3>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> <span id="db-online-users">0</span> Online Now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Row -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                    <!-- Analytics Chart -->
+                    <div class="glass rounded-2xl p-6 md:col-span-3 h-[400px]">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg text-white">Financial Growth Overview</h3>
+                            <select class="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1 outline-none">
+                                <option>Last 7 Days</option>
+                                <option>This Month</option>
+                                <option>This Year</option>
+                            </select>
+                        </div>
+                        <div class="relative w-full h-[300px]">
+                            <canvas id="mainFinanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Mini Stat Cards -->
+                    <div class="space-y-5">
+                        <div class="glass p-5 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Active Users</p>
+                                <p class="text-2xl font-bold text-emerald-400" id="db-active-users">0</p>
+                            </div>
+                            <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-500">
+                                <i class='bx bx-user-check text-2xl'></i>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Blocked Users</p>
+                                <p class="text-2xl font-bold text-red-400" id="db-blocked-users">0</p>
+                            </div>
+                            <div class="p-3 bg-red-500/10 rounded-xl text-red-500">
+                                <i class='bx bx-user-x text-2xl'></i>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Platform Profit</p>
+                                <p class="text-2xl font-bold text-indigo-400" id="db-platform-profit">$0.00</p>
+                            </div>
+                            <div class="p-3 bg-indigo-500/10 rounded-xl text-indigo-500">
+                                <i class='bx bx-trending-up text-2xl'></i>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-2xl flex items-center justify-between border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                            <div>
+                                <p class="text-xs text-amber-500 uppercase tracking-wider font-semibold">Pending KYC</p>
+                                <p class="text-2xl font-bold text-white" id="db-pending-kyc">0</p>
+                            </div>
+                            <button onclick="switchTab('kyc')" class="p-2 bg-amber-500 hover:bg-amber-400 rounded-lg text-slate-900 font-bold transition text-xs">
+                                Review
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Table -->
+                <div class="glass rounded-2xl border border-slate-700/50 overflow-hidden">
+                    <div class="p-5 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/30">
+                        <h3 class="font-bold text-white">Live System Operations</h3>
+                        <div class="flex gap-2">
+                             <div class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-900/60 text-slate-400 text-xs uppercase font-semibold">
+                                <tr>
+                                    <th class="px-5 py-3">Time</th>
+                                    <th class="px-5 py-3">Event Type</th>
+                                    <th class="px-5 py-3">User</th>
+                                    <th class="px-5 py-3">Amount/Data</th>
+                                    <th class="px-5 py-3 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800" id="live-activity-feed">
+                                <tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">Awaiting stream...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE: USER MANAGEMENT -->
+            <section id="users" class="page-section max-w-7xl mx-auto space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Enterprise Directory</h2>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="glass px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-800 transition"><i class='bx bx-filter'></i> Quick Filters</button>
+                        <button class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition" onclick="loadUsersTable()"><i class='bx bx-refresh'></i> Sync</button>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl overflow-hidden shadow-2xl">
+                    <div class="p-4 border-b border-slate-700/50 flex gap-4 bg-slate-900/40">
+                        <div class="relative max-w-sm w-full">
+                            <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400'></i>
+                            <input type="text" id="user-search" placeholder="Search Email, Name, Username, IP..." class="w-full bg-black/20 border border-slate-700 focus:border-indigo-500 rounded-lg pl-9 pr-3 py-2 text-sm outline-none transition">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto min-h-[500px]">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-800/80 text-slate-300 text-[11px] uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-5 py-4">User Profile</th>
+                                    <th class="px-5 py-4">Contact Info</th>
+                                    <th class="px-5 py-4 text-right">Financials</th>
+                                    <th class="px-5 py-4 text-center">Status / KYC</th>
+                                    <th class="px-5 py-4">Registration / IP</th>
+                                    <th class="px-5 py-4 text-right">Admin Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-slate-800/50">
+                                <!-- Managed by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 border-t border-slate-700/50 flex justify-between items-center bg-slate-900/40 text-xs text-slate-400">
+                        <span>Showing <b class="text-white" id="users-showing-count">0</b> records from DB</span>
+                        <div class="flex gap-1" id="users-pagination">
+                            <!-- Pagination -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- PAGE: DEPOSITS -->
+            <section id="deposits" class="page-section max-w-7xl mx-auto space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Deposit Requests</h2>
+                        <p class="text-slate-400 text-sm">Review, approve or reject manual deposit receipts uploaded by users.</p>
+                    </div>
+                    <button class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition" onclick="loadDepositsTable()"><i class='bx bx-refresh'></i> Sync Deposits</button>
+                </div>
+
+                <div class="glass rounded-2xl overflow-hidden shadow-2xl">
+                    <div class="overflow-x-auto min-h-[400px]">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-800/80 text-slate-300 text-[11px] uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-5 py-4">User</th>
+                                    <th class="px-5 py-4">Amount</th>
+                                    <th class="px-5 py-4">Method & Reference</th>
+                                    <th class="px-5 py-4">Attachment</th>
+                                    <th class="px-5 py-4 text-center">Status</th>
+                                    <th class="px-5 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deposits-table-body" class="divide-y divide-slate-800/50">
+                                <tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">Click Sync to load deposits.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE: WITHDRAWALS -->
+            <section id="withdrawals" class="page-section max-w-7xl mx-auto space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Withdrawal Requests</h2>
+                        <p class="text-slate-400 text-sm">Approve or reject withdrawal operations based on user wallet balance.</p>
+                    </div>
+                    <button class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition" onclick="loadWithdrawalsTable()"><i class='bx bx-refresh'></i> Sync Withdrawals</button>
+                </div>
+
+                <div class="glass rounded-2xl overflow-hidden shadow-2xl">
+                    <div class="overflow-x-auto min-h-[400px]">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-800/80 text-slate-300 text-[11px] uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-5 py-4">User</th>
+                                    <th class="px-5 py-4">Amount</th>
+                                    <th class="px-5 py-4">Payout Method Details</th>
+                                    <th class="px-5 py-4 text-center">Status</th>
+                                    <th class="px-5 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawals-table-body" class="divide-y divide-slate-800/50">
+                                <tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">Click Sync to load withdrawals.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE: TRANSACTIONS -->
+            <section id="transactions" class="page-section max-w-7xl mx-auto space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Global Journal (Transactions)</h2>
+                        <p class="text-slate-400 text-sm">System audit log of all financial movements on the platform.</p>
+                    </div>
+                    <button class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition" onclick="loadTransactionsTable()"><i class='bx bx-refresh'></i> Sync Transactions</button>
+                </div>
+
+                <div class="glass rounded-2xl overflow-hidden shadow-2xl">
+                    <div class="overflow-x-auto min-h-[500px]">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-800/80 text-slate-300 text-[11px] uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-5 py-4">Timestamp</th>
+                                    <th class="px-5 py-4">User</th>
+                                    <th class="px-5 py-4">Type</th>
+                                    <th class="px-5 py-4">Amount</th>
+                                    <th class="px-5 py-4">Method/Ref</th>
+                                    <th class="px-5 py-4 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-table-body" class="divide-y divide-slate-800/50">
+                                <tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">Click Sync to load transactions history.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Global Modals Container -->
+    <div id="modal-container"></div>
+
+    <!-- MAIN JAVASCRIPT FOR ENTERPRISE FUNCTIONALITY -->
+    <script>
+        // CONFIGURATION
+        const API_BASE = 'http://localhost:5000/api/admin'; 
+        let currentToken = localStorage.getItem('adminToken');
+        let socket = null;
+
+        // AUTHENTICATION CHECK
+        async function bootSystem() {
+            if(!currentToken) {
+                showAuthForm();
+                return;
+            }
+
+            try {
+                // Verify Token and Role via API
+                const res = await fetch(`${API_BASE}/verify-token`, { 
+                    headers: { 'Authorization': `Bearer ${currentToken}` } 
+                });
+                
+                if(res.ok) {
+                    // Success hide gate
+                    document.getElementById('auth-gate').style.opacity = '0';
+                    setTimeout(() => document.getElementById('auth-gate').style.display = 'none', 500);
+                    
+                    // Initialize Dashboard and Socket
+                    initSystem();
+                } else {
+                    localStorage.removeItem('adminToken');
+                    currentToken = null;
+                    showAuthForm();
+                }
+            } catch (err) {
+                console.error(err);
+                showAuthForm();
+            }
+        }
+
+        function showAuthForm() {
+            document.getElementById('auth-status-text').style.display = 'none';
+            document.getElementById('auth-loader').style.display = 'none';
+            document.getElementById('auth-error').classList.add('hidden');
+            document.getElementById('admin-login-form').classList.remove('hidden');
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPass').value;
+
+            document.getElementById('admin-login-form').classList.add('hidden');
+            document.getElementById('auth-status-text').innerText = 'Verifying admin credentials...';
+            document.getElementById('auth-status-text').style.display = 'block';
+            document.getElementById('auth-loader').style.display = 'block';
+
+            try {
+                const res = await fetch('http://localhost:5000/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+                if(res.ok && data.token) {
+                    localStorage.setItem('adminToken', data.token);
+                    currentToken = data.token;
+                    document.getElementById('auth-status-text').innerText = 'Authentication successful! Starting socket streams...';
+                    setTimeout(() => {
+                        bootSystem();
+                    }, 500);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Authentication Denied',
+                        text: data.error || 'Invalid credentials or you are not authorized.',
+                        background: '#1d2432',
+                        color: '#fff',
+                        confirmButtonColor: '#6366f1'
+                    });
+                    showAuthForm();
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: 'Unable to reach backend connection. Please ensure Server is running.',
+                    background: '#1d2432',
+                    color: '#fff',
+                    confirmButtonColor: '#6366f1'
+                });
+                showAuthForm();
+            }
+        }
+
+        function showAuthError() {
+            document.getElementById('auth-status-text').style.display = 'none';
+            if (document.getElementById('auth-loader')) document.getElementById('auth-loader').style.display = 'none';
+            document.getElementById('auth-error').classList.remove('hidden');
+        }
+
+        // SYSTEM INITIALIZATION
+        function initSystem() {
+            initSocketConnection();
+            initCharts();
+            loadDashboardStats();
+            // Start silent polling as fallback if socket fails
+            setInterval(loadDashboardStats, 10000);
+        }
+
+        // REAL-TIME SOCKET.IO LOGIC
+        function initSocketConnection() {
+            try {
+                socket = io('http://localhost:5000', {
+                    auth: { token: currentToken }
+                });
+
+                socket.on('connect', () => {
+                    console.log('Enterprise Stream connected.');
+                    pushLog('System', 'Admin Terminal Connected Securely', 'success');
+                });
+
+                socket.on('stats_update', (data) => {
+                    updateDashboardCards(data);
+                });
+
+                socket.on('new_registration', (user) => {
+                    pushLog('Registration', `New User: ${user.email}`, 'info');
+                    loadDashboardStats(); // Refresh stats
+                });
+
+                socket.on('new_deposit', (deposit) => {
+                    pushLog('Finance', `New Deposit Request: $${deposit.amount} by ${deposit.user}`, 'warning');
+                    alertSound();
+                    updateBadgeCount('sb-kyc-count'); // Update badge
+                });
+
+                socket.on('new_withdraw', (withdraw) => {
+                    pushLog('Withdrawal', `New Payout Request: $${withdraw.amount} by ${withdraw.user}`, 'warning');
+                    alertSound();
+                });
+
+            } catch (e) {
+                console.log("Socket server not available yet.");
+            }
+        }
+
+        function pushLog(type, message, statusClass) {
+            const tbody = document.getElementById('live-activity-feed');
+            
+            // Remove 'awaiting stream'
+            if(tbody.querySelector('td[colspan="5"]')) tbody.innerHTML = '';
+            
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-800/40 transition-colors bg-slate-900/10';
+            
+            // Format time HH:MM:SS
+            const t = new Date().toLocaleTimeString('en-US',{hour12:false});
+            
+            let badge = `<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold text-cyan-400 bg-cyan-400/10 border border-cyan-500/20">INFO</span>`;
+            if(statusClass === 'success') badge = `<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-500/20">SUCCESS</span>`;
+            if(statusClass === 'warning') badge = `<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold text-amber-400 bg-amber-400/10 border border-amber-500/20">PENDING</span>`;
+
+            tr.innerHTML = `
+                <td class="px-5 py-3 text-slate-400 text-xs font-mono">${t}</td>
+                <td class="px-5 py-3 text-white font-medium">${type}</td>
+                <td class="px-5 py-3 text-slate-300 text-sm">${message.split(':')[0]}</td>
+                <td class="px-5 py-3 text-slate-300 text-sm">${message}</td>
+                <td class="px-5 py-3 text-right">${badge}</td>
+            `;
+            tbody.prepend(tr);
+            if(tbody.children.length > 8) tbody.lastElementChild.remove();
+        }
+
+        function alertSound() {
+            // Optional subtle notification sound
+        }
+
+        // TAB NAVIGATION
+        function switchTab(tabId) {
+            // Update Menu Active State
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active', 'border-l-[3px]', 'border-indigo-500'));
+            event.currentTarget.classList.add('active');
+
+            // Hide Sections
+            document.querySelectorAll('.page-section').forEach(section => section.classList.remove('active'));
+            
+            // Show Target
+            document.getElementById(tabId).classList.add('active');
+
+            // Lazy Load Data
+            if(tabId === 'users') loadUsersTable();
+            if(tabId === 'deposits') loadDepositsTable();
+            if(tabId === 'withdrawals') loadWithdrawalsTable();
+            if(tabId === 'transactions') loadTransactionsTable();
+        }
+
+        async function loadDashboardStats() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const res = await fetch(`${API_BASE}/dashboard-stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(res.ok) {
+                    const data = await res.json();
+                    document.getElementById("db-total-users").innerText = data.totalUsers.toString();
+                    document.getElementById("db-active-users").innerText = data.activeUsers.toString();
+                    document.getElementById("db-total-balance").innerText = "$" + data.totalBalance.toLocaleString('en-US', {minimumFractionDigits:2});
+                    document.getElementById("db-total-deposits").innerText = "$" + data.totalDeposits.toLocaleString('en-US', {minimumFractionDigits:2});
+                    document.getElementById("db-total-withdrawals").innerText = "$" + data.totalWithdrawals.toLocaleString('en-US', {minimumFractionDigits:2});
+                    
+                    const profitEl = document.getElementById("db-platform-profit");
+                    if(profitEl) profitEl.innerText = "$" + data.totalProfit.toLocaleString('en-US', {minimumFractionDigits:2});
+                    
+                    const onlineEl = document.getElementById("db-online-users");
+                    if(onlineEl) onlineEl.innerText = (data.activeUsers > 0 ? "1" : "0");
+                }
+            } catch (e) {
+                console.error('Stats load failed: ', e);
+            }
+        }
+
+        async function loadUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-16 text-center"><div class="loader w-8 h-8 mx-auto mb-4 border-t-indigo-500"></div><p class="text-slate-400">Querying Database...</p></td></tr>`;
+            
+            try {
+                const token = localStorage.getItem('adminToken');
+                const res = await fetch(`${API_BASE}/users`, {
+                     headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(res.ok) {
+                    const actualUsers = await res.json();
+                    renderUsers(actualUsers.map(u => ({
+                        id: 'MB' + u._id.substring(u._id.length-6),
+                        mongoId: u._id,
+                        name: u.name,
+                        username: u.name.replace(/\s+/g, '').toLowerCase(),
+                        email: u.email,
+                        phone: u.phone || 'N/A',
+                        wallet: u.wallet ? (u.wallet.balance || 0).toString() : "0.00",
+                        status: u.status,
+                        kyc: u.kycStatus,
+                        ip: u.ip || '127.0.0.1',
+                        date: new Date(u.createdAt).toISOString()
+                    })));
+                } else {
+                    console.error("Failed to load users");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            document.getElementById('users-showing-count').innerText = users.length;
+            
+            users.forEach(user => {
+                const isAct = user.status === 'active';
+                const isKyc = user.kyc === 'verified';
+                const stsBadge = isAct 
+                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded text-[10px] uppercase font-bold flex items-center justify-center gap-1 w-max mx-auto"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Active</span>` 
+                    : `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-1 rounded text-[10px] uppercase font-bold flex items-center justify-center gap-1 w-max mx-auto"><div class="w-1.5 h-1.5 rounded-full bg-red-500"></div> Suspended</span>`;
+                
+                const kycBadge = isKyc
+                    ? `<span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider"><i class='bx bxs-badge-check'></i> Verified KYC</span>`
+                    : `<span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider"><i class='bx bx-time-five'></i> Pending KYC</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/40 transition-colors group';
+                tr.innerHTML = `
+                    <td class="px-5 py-4">
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff" class="w-10 h-10 rounded-full border-2 border-slate-700 group-hover:border-indigo-500 transition-colors">
+                            <div>
+                                <p class="text-slate-200 font-semibold text-sm group-hover:text-white">${user.name}</p>
+                                <p class="text-[11px] text-slate-500 font-mono">@${user.username}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-5 py-4">
+                        <div class="text-xs text-slate-300"><i class='bx bx-envelope text-slate-500 mr-1'></i>${user.email}</div>
+                        <div class="text-xs text-slate-500 mt-1"><i class='bx bx-phone text-slate-500 mr-1'></i>${user.phone}</div>
+                    </td>
+                    <td class="px-5 py-4 text-right">
+                        <div class="text-[15px] font-bold text-amber-400 bg-amber-400/5 px-2 py-1 rounded border border-amber-400/10 inline-block">$${parseFloat(user.wallet).toLocaleString('en-US', {minimumFractionDigits:2})}</div>
+                        <div class="text-[10px] text-slate-500 mt-1 font-mono uppercase">ID: ${user.id}</div>
+                    </td>
+                    <td class="px-5 py-4 text-center">
+                        <div class="space-y-2">
+                            ${stsBadge}
+                            <div>${kycBadge}</div>
+                        </div>
+                    </td>
+                    <td class="px-5 py-4">
+                        <div class="text-xs text-slate-400">${new Date(user.date).toLocaleDateString()}</div>
+                        <div class="text-[10px] text-slate-500 font-mono mt-1">IP: ${user.ip}</div>
+                    </td>
+                    <td class="px-5 py-4 text-right">
+                        <button onclick="adminAction('edit', '${user.mongoId}')" class="p-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white rounded-lg transition-colors tooltip" title="Edit Profile"><i class='bx bxs-edit-alt'></i></button>
+                        <button onclick="adminAction('wallet', '${user.mongoId}')" class="p-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors ml-1 tooltip" title="Manage Funds"><i class='bx bx-wallet-alt'></i></button>
+                        <button onclick="adminAction('suspend', '${user.mongoId}')" class="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors ml-1 tooltip" title="Suspend Auth"><i class='bx bx-block'></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ADMIN ACTIONS ENGINE
+        function adminAction(action, id) {
+            const token = localStorage.getItem('adminToken');
+            if(action === 'wallet') {
+                Swal.fire({
+                    title: 'Adjust Wallet Balance',
+                    html: `
+                        <div class="text-left text-sm text-slate-300 mt-2">
+                            <label class="block mb-1 font-medium">Select Operation</label>
+                            <select id="opType" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-indigo-500 mb-4">
+                                <option value="add">Add Funds (Credit)</option>
+                                <option value="sub">Deduct Funds (Debit)</option>
+                            </select>
+                            
+                            <label class="block mb-1 font-medium">Amount ($)</label>
+                            <input type="number" id="amt" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-indigo-500 mb-4" placeholder="e.g. 500.00">
+                            
+                            <label class="block mb-1 font-medium">Note / Reason</label>
+                            <input type="text" id="note" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-indigo-500" placeholder="e.g. Manual adjustments">
+                        </div>
+                    `,
+                    background: '#1e293b',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonText: 'Execute Securely',
+                    confirmButtonColor: '#6366f1',
+                    cancelButtonColor: '#475569',
+                    preConfirm: () => {
+                        return { 
+                            type: document.getElementById('opType').value,
+                            amount: document.getElementById('amt').value,
+                            note: document.getElementById('note').value
+                        }
+                    }
+                }).then(async (result) => {
+                    if(result.isConfirmed && result.value.amount) {
+                        try {
+                            const res = await fetch(`http://localhost:5000/api/admin/users/${id}/adjust-wallet`, {
+                                method: 'POST',
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify(result.value)
+                            });
+                            const data = await res.json();
+                            if(res.ok) {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: `Wallet adjusted successfully. New balance: $${parseFloat(data.balance).toFixed(2)}`,
+                                    icon: 'success',
+                                    background: '#1e293b',
+                                    color: '#fff',
+                                    confirmButtonColor: '#6366f1'
+                                });
+                                loadUsersTable();
+                                loadDashboardStats();
+                            } else {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: data.error || 'Failed to adjust wallet balance.',
+                                    icon: 'error',
+                                    background: '#1e293b',
+                                    color: '#fff',
+                                    confirmButtonColor: '#ef4444'
+                                });
+                            }
+                        } catch (err) {
+                            console.error(err);
+                        }
+                    }
+                });
+            } else if (action === 'suspend') {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This will toggle the user's active/suspended connection status.",
+                    icon: 'warning',
+                    background: '#1e293b',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#6366f1',
+                    cancelButtonColor: '#475569',
+                    confirmButtonText: 'Yes, Toggle Connection'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const res = await fetch(`http://localhost:5000/api/admin/users/${id}/toggle-status`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            const data = await res.json();
+                            if (res.ok) {
+                                Swal.fire({
+                                    title: 'Status Updated!',
+                                    text: `User is now ${data.status}.`,
+                                    icon: 'success',
+                                    background: '#1e293b',
+                                    color: '#fff',
+                                    confirmButtonColor: '#6366f1'
+                                });
+                                loadUsersTable();
+                                loadDashboardStats();
+                            } else {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: data.error || 'Failed to toggle status.',
+                                    icon: 'error',
+                                    background: '#1e293b',
+                                    color: '#fff',
+                                    confirmButtonColor: '#ef4444'
+                                });
+                            }
+                        } catch (err) { console.error(err); }
+                    }
+                });
+            } else if (action === 'edit') {
+                Swal.fire({
+                    title: 'System Notice',
+                    text: 'To edit user profile info, adjust their wallet directly or modify security details. General administration controls are active.',
+                    icon: 'info',
+                    background: '#1e293b',
+                    color: '#fff',
+                    confirmButtonColor: '#6366f1'
+                });
+            }
+        }
+
+        async function loadDepositsTable() {
+            const tbody = document.getElementById('deposits-table-body');
+            if(!tbody) return;
+            tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-16 text-center"><div class="loader w-8 h-8 mx-auto mb-4 border-t-indigo-500"></div><p class="text-slate-400">Querying DB...</p></td></tr>`;
+            try {
+                const token = localStorage.getItem('adminToken');
+                const res = await fetch(`http://localhost:5000/api/admin/deposits`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(res.ok) {
+                    const deps = await res.json();
+                    tbody.innerHTML = '';
+                    if(deps.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">No deposits found.</td></tr>`;
+                    }
+                    deps.forEach(dep => {
+                        const isPending = dep.status === 'pending';
+                        const statusBadge = dep.status === 'approved' 
+                            ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded text-[10px] uppercase font-bold">Approved</span>`
+                            : (dep.status === 'rejected' 
+                                ? `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-1 rounded text-[10px] uppercase font-bold">Rejected</span>`
+                                : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded text-[10px] uppercase font-bold">Pending</span>`);
+                        
+                        const actionsHtml = isPending 
+                            ? `<button onclick="handleDepositAction('${dep._id}', 'approve')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-xs font-semibold mr-1 transition-colors">Approve</button>
+                               <button onclick="handleDepositAction('${dep._id}', 'reject')" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-semibold transition-colors">Reject</button>`
+                            : `<span class="text-xs text-slate-500">None (Processed)</span>`;
+                            
+                        const name = dep.userId?.name || 'Unknown';
+                        const email = dep.userId?.email || 'N/A';
+
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-slate-800/40 transition-colors';
+                        tr.innerHTML = `
+                            <td class="px-5 py-4">
+                                <p class="text-slate-205 font-semibold text-sm">${name}</p>
+                                <p class="text-[11px] text-slate-500 font-mono">${email}</p>
+                            </td>
+                            <td class="px-5 py-4 font-bold text-emerald-400">$${dep.amount.toFixed(2)}</td>
+                            <td class="px-5 py-4">
+                                <p class="text-xs text-slate-300 font-semibold">${dep.paymentMethodUsed || 'Sadapay'}</p>
+                                <p class="text-[10px] text-slate-500 font-mono">Ref: ${dep.transactionId || 'N/A'}</p>
+                            </td>
+                            <td class="px-5 py-4">
+                                <a href="http://localhost:5000/uploads/${dep.receiptImage}" target="_blank" class="text-indigo-400 font-semibold hover:underline flex items-center gap-1">
+                                    <i class='bx bx-image-alt text-lg'></i> View Receipt
+                                </a>
+                            </td>
+                            <td class="px-5 py-4 text-center">${statusBadge}</td>
+                            <td class="px-5 py-4 text-right">${actionsHtml}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function handleDepositAction(id, action) {
+            const token = localStorage.getItem('adminToken');
+            if(action === 'approve') {
+                Swal.fire({
+                    title: 'Approve Deposit?',
+                    text: "User's wallet balance will be credited with the deposit amount.",
+                    icon: 'question',
+                    background: '#1e293b',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#475569',
+                    confirmButtonText: 'Yes, Approve'
+                }).then(async (result) => {
+                    if(result.isConfirmed) {
+                        try {
+                            const res = await fetch(`http://localhost:5000/api/admin/deposits/${id}/approve`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if(res.ok) {
+                                Swal.fire({ title: 'Approved!', text: 'Deposit has been credited.', icon: 'success', background: '#1e293b', color: '#fff', confirmButtonColor: '#6366f1' });
+                                loadDepositsTable();
+                                loadDashboardStats();
+                            }
+                        } catch(e) { console.error(e); }
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Reject Deposit',
+                    input: 'text',
+                    inputPlaceholder: 'Enter rejection reason...',
+                    icon: 'warning',
+                    background: '#1e293b',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#475569',
+                    confirmButtonText: 'Yes, Reject',
+                    preConfirm: (value) => {
+                        return { reason: value || 'Rejected by Admin' }
+                    }
+                }).then(async (result) => {
+                    if(result.isConfirmed) {
+                        try {
+                            const res = await fetch(`http://localhost:5000/api/admin/deposits/${id}/reject`, {
+                                method: 'POST',
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}` 
+                                },
+                                body: JSON.stringify(result.value)
+                            });
+                            if(res.ok) {
+                                Swal.fire({ title: 'Rejected', text: 'Deposit marked as rejected.', icon: 'info', background: '#1e293b', color: '#fff', confirmButtonColor: '#6366f1' });
+                                loadDepositsTable();
+                                loadDashboardStats();
+                            }
+                        } catch(e) { console.error(e); }
+                    }
+                });
+            }
+        }
+
+        async function loadWithdrawalsTable() {
+            const tbody = document.getElementById('withdrawals-table-body');
+            if(!tbody) return;
+            tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-16 text-center"><div class="loader w-8 h-8 mx-auto mb-4 border-t-indigo-500"></div><p class="text-slate-400">Querying DB...</p></td></tr>`;
+            try {
+                const token = localStorage.getItem('adminToken');
+                const res = await fetch(`http://localhost:5000/api/admin/withdraws`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(res.ok) {
+                    const ws = await res.json();
+                    tbody.innerHTML = '';
+                    if(ws.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">No withdrawals found.</td></tr>`;
+                    }
+                    ws.forEach(w => {
+                        const isPending = w.status === 'pending';
+                        const statusBadge = w.status === 'approved' 
+                            ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded text-[10px] uppercase font-bold">Completed</span>`
+                            : (w.status === 'rejected' 
+                                ? `<span class="bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-1 rounded text-[10px] uppercase font-bold">Rejected</span>`
+                                : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded text-[10px] uppercase font-bold">Pending</span>`);
+                        
+                        const actionsHtml = isPending 
+                            ? `<button onclick="handleWithdrawAction('${w._id}', 'approve')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-xs font-semibold mr-1 transition-colors">Approve</button>
+                               <button onclick="handleWithdrawAction('${w._id}', 'reject')" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-semibold transition-colors">Reject</button>`
+                            : `<span class="text-xs text-slate-500">None (Processed)</span>`;
+                            
+                        const name = w.userId?.name || 'Unknown';
+                        const email = w.userId?.email || 'N/A';
+                        const methodInfo = w.methodInfo || {};
+
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-slate-800/40 transition-colors';
+                        tr.innerHTML = `
+                            <td class="px-5 py-4">
+                                <p class="text-slate-205 font-semibold text-sm">${name}</p>
+                                <p class="text-[11px] text-slate-500 font-mono">${email}</p>
+                            </td>
+                            <td class="px-5 py-4 font-bold text-amber-500">$${w.amount.toFixed(2)}</td>
+                            <td class="px-5 py-4">
+                                <p class="text-xs text-slate-300 font-semibold">${methodInfo.methodName || 'Bank'}</p>
+                                <p class="text-[11px] text-slate-450">Title: ${methodInfo.accountTitle || 'N/A'} | A/C: ${methodInfo.accountNumber || 'N/A'}</p>
+                            </td>
+                            <td class="px-5 py-4 text-center">${statusBadge}</td>
+                            <td class="px-5 py-4 text-right">${actionsHtml}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function handleWithdrawAction(id, action) {
+            const token = localStorage.getItem('adminToken');
+            if(action === 'approve') {
+                Swal.fire({
+                    title: 'Approve Withdrawal?',
+                    text: "User's pending withdraw amount will be processed and balance deducted from wallet.",
+                    icon: 'question',
+                    background: '#1e293b',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#475569',
+                    confirmButtonText: 'Yes, Process!'
+                }).then(async (result) => {
+                    if(result.isConfirmed) {
+                        try {
+                            const res = await fetch(`http://localhost:5000/api/admin/withdraws/${id}/approve`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (res.ok) {
+                                Swal.fire({ title: 'Approved!', text: 'Withdrawal processed successfully.', icon: 'success', background: '#1e293b', color: '#fff', confirmButtonColor: '#6366f1' });
+                                loadWithdrawalsTable();
+                                loadDashboardStats();
+                            } else {
+                                const data = await res.json();
+                                Swal.fire({ title: 'Error', text: data.error || 'Failed to approve', icon: 'error', background: '#1e293b', color: '#fff', confirmButtonColor: '#ef4444' });
+                            }
+                        } catch(e) { console.error(e); }
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Reject Withdrawal',
+                    input: 'text',
+                    inputPlaceholder: 'Enter rejection reason...',
+                    icon: 'warning',
+                    background: '#1e293b',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#475569',
+                    confirmButtonText: 'Yes, Reject',
+                    preConfirm: (value) => {
+                        return { reason: value || 'Rejected by Admin' }
+                    }
+                }).then(async (result) => {
+                    if(result.isConfirmed) {
+                        try {
+                            const res = await fetch(`http://localhost:5000/api/admin/withdraws/${id}/reject`, {
+                                method: 'POST',
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}` 
+                                },
+                                body: JSON.stringify(result.value)
+                            });
+                            if(res.ok) {
+                                Swal.fire({ title: 'Rejected', text: 'Withdrawal marked as rejected.', icon: 'info', background: '#1e293b', color: '#fff', confirmButtonColor: '#6366f1' });
+                                loadWithdrawalsTable();
+                                loadDashboardStats();
+                            }
+                        } catch(e) { console.error(e); }
+                    }
+                });
+            }
+        }
+
+        async function loadTransactionsTable() {
+            const tbody = document.getElementById('transactions-table-body');
+            if(!tbody) return;
+            tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-16 text-center"><div class="loader w-8 h-8 mx-auto mb-4 border-t-indigo-500"></div><p class="text-slate-400">Querying DB...</p></td></tr>`;
+            try {
+                const token = localStorage.getItem('adminToken');
+                const res = await fetch(`http://localhost:5000/api/admin/transactions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(res.ok) {
+                    const txs = await res.json();
+                    tbody.innerHTML = '';
+                    if(txs.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">No transactions recorded.</td></tr>`;
+                    }
+                    txs.forEach(tx => {
+                        const dateStr = new Date(tx.createdAt).toLocaleString();
+                        const user = tx.userId ? `${tx.userId.name} (${tx.userId.email})` : 'Unknown User';
+                        
+                        let colorClass = 'text-white';
+                        if(tx.type === 'deposit') colorClass = 'text-emerald-400';
+                        if(tx.type === 'withdraw') colorClass = 'text-amber-500';
+                        if(tx.type === 'adjustment') colorClass = 'text-indigo-400';
+
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-slate-800/40 transition-colors';
+                        tr.innerHTML = `
+                            <td class="px-5 py-4 text-xs font-mono text-slate-400">${dateStr}</td>
+                            <td class="px-5 py-4 text-slate-200 text-sm font-semibold">${user}</td>
+                            <td class="px-5 py-4 uppercase font-bold text-xs"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700">${tx.type}</span></td>
+                            <td class="px-5 py-4 font-bold ${colorClass}">$${tx.amount.toFixed(2)}</td>
+                            <td class="px-5 py-4 font-mono text-xs text-slate-500">${tx.reference || tx.method || 'N/A'}</td>
+                            <td class="px-5 py-4 text-right">
+                                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Approved</span>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // CHARTS LOGIC
+        function initCharts() {
+            setTimeout(() => {
+                const ctx = document.getElementById('mainFinanceChart').getContext('2d');
+                
+                // Gradient for chart
+                let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+                gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Platform Volume ($)',
+                            data: [12000, 19000, 15000, 22000, 30000, 28000, 35000],
+                            borderColor: '#6366f1',
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#8b5cf6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false, drawBorder: false }, ticks: { color: '#94a3b8' } },
+                            y: { grid: { color: 'rgba(51, 65, 81, 0.5)', drawBorder: false }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
+            }, 100);
+        }
+
+        // UTILITIES
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if(!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString('en-US');
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function logoutAdmin() {
+            Swal.fire({
+                title: 'Terminate Session?',
+                text: "You will need to authenticate again.",
+                icon: 'warning',
+                background: '#1e293b',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Yes, Logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '/';
+                }
+            })
+        }
+
+        // REAL TIME SYNC LISTENER
+        window.addEventListener('storage', function(e) {
+            if(e.key === 'my_business_mock_db') {
+                 if(typeof pushLog === 'function') pushLog('System Sync', 'Live database update remotely detected', 'success');
+                 loadDashboardStats();
+                 if (document.getElementById('users') && document.getElementById('users').classList.contains('active')) {
+                     loadUsersTable();
+                 }
+            }
+        });
+
+        // STARTUP
+        window.addEventListener('DOMContentLoaded', bootSystem);
+    </script>
+</body>
+</html>

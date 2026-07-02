@@ -51,18 +51,18 @@ function showAdvancedToast(title, message, type = 'success') {
 
 // Initialize State
 let appState = {
-  balance: 1000.00,
-  totalDeposit: 1500.00,
-  totalWithdraw: 1050.00,
-  totalProfit: 120.00,
-  lockedEarnings: 1500.00,
+  balance: 0.00,
+  totalDeposit: 0.00,
+  totalWithdraw: 0.00,
+  totalProfit: 0.00,
+  lockedEarnings: 0.00,
   deposits: [],
   withdraws: []
 };
 
 // Update user details on both Header and Profile section in DOM
-function updateDOMUserInfo(name, phone) {
-  let initials = "JS";
+function updateDOMUserInfo(name, email) {
+  let initials = "MB";
   if (name) {
     const parts = name.trim().split(" ");
     if (parts.length >= 2) {
@@ -78,7 +78,7 @@ function updateDOMUserInfo(name, phone) {
   const elHId = document.getElementById('user-header-id');
   if (elHInitial) elHInitial.textContent = initials;
   if (elHName) elHName.textContent = name;
-  if (elHId) elHId.textContent = `ID: ${phone}`;
+  if (elHId) elHId.textContent = `ID: ${email.split('@')[0]}`;
 
   // Profile Elements
   const elPInitial = document.getElementById('user-profile-initial');
@@ -86,7 +86,7 @@ function updateDOMUserInfo(name, phone) {
   const elPMeta = document.getElementById('user-profile-meta');
   if (elPInitial) elPInitial.textContent = initials;
   if (elPName) elPName.textContent = name;
-  if (elPMeta) elPMeta.textContent = `ID: ${phone} | Member since May 2026`;
+  if (elPMeta) elPMeta.textContent = `ID: ${email.split('@')[0]} | Member since May 2026`;
 
   // Referral Link
   const elRef = document.getElementById('user-referral-link');
@@ -95,84 +95,104 @@ function updateDOMUserInfo(name, phone) {
   }
 }
 
-// Load state from localStorage on startup
-function loadState() {
-  // Initialize users database in localStorage if not exists
-  let usersStr = localStorage.getItem('my_business_users');
-  let users = [];
-  if (!usersStr) {
-    users = [
-      {
-        email: "demo@example.com",
-        password: "password123",
-        name: "John Smith",
-        phone: "03325700270",
-        state: {
-          balance: 1000.00,
-          totalDeposit: 1500.00,
-          totalWithdraw: 1050.00,
-          totalProfit: 120.00,
-          lockedEarnings: 1500.00,
-          deposits: [
-            { name: 'John Smith', amount: 500.00, status: 'Completed', date: '2 May 2026' },
-            { name: 'Michael Lee', amount: 1000.00, status: 'Completed', date: '2 May 2026' },
-            { name: 'David Brown', amount: 750.00, status: 'Completed', date: '1 May 2026' },
-            { name: 'James Wilson', amount: 1250.00, status: 'Completed', date: '1 May 2026' },
-            { name: 'Robert Taylor', amount: 650.00, status: 'Completed', date: '30 Apr 2026' }
-          ],
-          withdraws: [
-            { amount: 200.00, method: 'Jazzcash', status: 'Completed', date: '2 May 2026' },
-            { amount: 350.00, method: 'Easypaisa', status: 'Completed', date: '2 May 2026' },
-            { amount: 150.00, method: 'Jazzcash', status: 'Completed', date: '1 May 2026' },
-            { amount: 500.00, method: 'Bank Transfer', status: 'Completed', date: '1 May 2026' },
-            { amount: 250.00, method: 'Easypaisa', status: 'Completed', date: '30 Apr 2026' }
-          ]
-        }
-      }
-    ];
-    localStorage.setItem('my_business_users', JSON.stringify(users));
-  } else {
-    users = JSON.parse(usersStr);
+const API_URL = 'http://localhost:5000/api';
+
+
+
+// Show Dashboard immediately - no waiting
+function showDashboard() {
+  const authLayout = document.getElementById('auth-layout');
+  const dashLayout = document.getElementById('dashboard-layout');
+  if (authLayout) authLayout.classList.add('hidden');
+  if (dashLayout) {
+    dashLayout.classList.remove('hidden');
+    dashLayout.style.opacity = '1';
+    dashLayout.style.transform = 'scale(1)';
+  }
+}
+
+// Show Auth Screen
+function showAuthScreen(mode = 'login') {
+  const authLayout = document.getElementById('auth-layout');
+  const dashLayout = document.getElementById('dashboard-layout');
+  if (authLayout) authLayout.classList.remove('hidden');
+  if (dashLayout) dashLayout.classList.add('hidden');
+  if (window.toggleAuthMode) window.toggleAuthMode(mode);
+}
+
+// Load state from backend on startup
+async function loadState() {
+  const token = localStorage.getItem('my_business_token');
+  
+  if (!token) {
+    showAuthScreen('login');
+    return;
   }
 
-  // Check logged in session
-  const loggedInEmail = localStorage.getItem('my_business_logged_in_user');
-  if (loggedInEmail) {
-    const currentUser = users.find(u => u.email === loggedInEmail);
-    if (currentUser) {
-      appState = currentUser.state;
-      // Show dashboard, hide auth (instant, no loading delay on startup)
-      document.getElementById('auth-layout').classList.add('hidden');
-      const elDash = document.getElementById('dashboard-layout');
-      elDash.classList.remove('hidden');
-      elDash.style.opacity = '1';
-      elDash.style.transform = 'scale(1)';
-      
-      updateDOMUserInfo(currentUser.name, currentUser.phone);
-      updateUI();
+  // Token exists → show dashboard IMMEDIATELY, load data in background
+  showDashboard();
+  
+  try {
+    const userRes = await fetch(`${API_URL}/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!userRes.ok) {
+      // Token invalid → go back to login
+      localStorage.removeItem('my_business_token');
+      showAuthScreen('login');
       return;
     }
-  }
+    
+    const currentUser = await userRes.json();
+    updateDOMUserInfo(currentUser.name, currentUser.email);
 
-  // Not logged in: show auth, hide dashboard
-  document.getElementById('auth-layout').classList.remove('hidden');
-  document.getElementById('dashboard-layout').classList.add('hidden');
-  window.toggleAuthMode('signup');
-}
-
-// Save state to localStorage and update persistent users table
-function saveState() {
-  const loggedInEmail = localStorage.getItem('my_business_logged_in_user');
-  if (loggedInEmail) {
-    const users = JSON.parse(localStorage.getItem('my_business_users') || '[]');
-    const userIndex = users.findIndex(u => u.email === loggedInEmail);
-    if (userIndex !== -1) {
-      users[userIndex].state = appState;
-      localStorage.setItem('my_business_users', JSON.stringify(users));
+    // Load wallet data in background
+    try {
+      const walletRes = await fetch(`${API_URL}/wallet`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (walletRes.ok) {
+        const walletData = await walletRes.json();
+        appState.balance = walletData.wallet?.balance || 0;
+        appState.totalDeposit = walletData.wallet?.totalDeposit || 0;
+        appState.totalWithdraw = walletData.wallet?.totalWithdraw || 0;
+        appState.totalProfit = walletData.wallet?.totalProfit || 0;
+        appState.lockedEarnings = walletData.wallet?.lockedEarnings || 0;
+        
+        appState.deposits = (walletData.transactions || []).filter(t => t.type === 'deposit').map(t => ({
+          name: currentUser.name,
+          amount: t.amount,
+          status: t.status === 'approved' ? 'Completed' : (t.status === 'rejected' ? 'Rejected' : 'Pending'),
+          date: new Date(t.createdAt).toLocaleDateString()
+        }));
+        
+        appState.withdraws = (walletData.transactions || []).filter(t => t.type === 'withdraw').map(t => ({
+          amount: t.amount,
+          method: t.method,
+          status: t.status === 'approved' ? 'Completed' : (t.status === 'rejected' ? 'Rejected' : 'Pending'),
+          date: new Date(t.createdAt).toLocaleDateString()
+        }));
+        
+        updateUI();
+      }
+    } catch (walletErr) {
+      console.warn('Wallet load failed (continuing):', walletErr);
     }
+    
+  } catch (err) {
+    console.error('Auth check failed:', err);
+    // Network error - still keep dashboard open since token exists
+    // Only logout if explicitly invalid
   }
-  updateUI();
 }
+
+// Function to manually reload from API
+async function saveState() {
+  await loadState();
+}
+
 
 // Format currency helper
 function formatCurrency(val) {
@@ -244,9 +264,44 @@ function updateUI() {
   }
 }
 
+// Fetch payment methods dynamically
+async function loadPaymentMethods() {
+  const token = localStorage.getItem('my_business_token');
+  if(!token) return;
+  try {
+    const res = await fetch(`${API_URL}/payment-methods`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if(res.ok) {
+       const methods = await res.json();
+       const container = document.getElementById('deposit-methods-container');
+       const select = document.getElementById('deposit-method-select');
+       const details = document.getElementById('deposit-method-details');
+       if(methods.length > 0 && container) {
+          container.classList.remove('hidden');
+          select.innerHTML = '<option value="">Select a method...</option>';
+          methods.forEach(m => {
+             const op = document.createElement('option');
+             op.value = m.name;
+             op.textContent = m.name;
+             op.dataset.info = `<strong>Title:</strong> ${m.accountTitle}<br><strong>Account Number:</strong> ${m.accountNumber}<br><strong>IBAN:</strong> ${m.iban||'N/A'}<br><br><span class="text-xs text-indigo-300">${m.instructions||''}</span>`;
+             select.appendChild(op);
+          });
+          select.addEventListener('change', (e) => {
+             const opt = e.target.selectedOptions[0];
+             if(opt && opt.value) {
+                details.innerHTML = opt.dataset.info;
+             } else {
+                details.innerHTML = '';
+             }
+          });
+       }
+    }
+  } catch(e) { console.error(e); }
+}
+
 // Document Load Listener
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
+  loadPaymentMethods();
   initNavigation();
   initRippleEffect();
   initModals();
@@ -511,7 +566,7 @@ function initSubPages() {
   // Deposit Request Form
   const depositForm = document.getElementById('deposit-form');
   if (depositForm) {
-    depositForm.addEventListener('submit', (e) => {
+    depositForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const amount = parseFloat(depositInput.value);
       if (isNaN(amount) || amount <= 0) {
@@ -519,29 +574,66 @@ function initSubPages() {
         return;
       }
       
-      // Perform deposit
-      appState.balance += amount;
-      appState.totalDeposit += amount;
+      const token = localStorage.getItem('my_business_token');
+      if (!token) return;
       
-      // Add deposit log entry
-      appState.deposits.unshift({
-        name: 'John Smith',
-        amount: amount,
-        status: 'Completed',
-        date: getCurrentDateString()
-      });
+      const methodSelect = document.getElementById('deposit-method-select');
+      const txnInput = document.getElementById('deposit-txn-input');
+      const fileInput = document.getElementById('deposit-screenshot-input');
       
-      alert(`Recharge request processed. Deposit of $${formatCurrency(amount)} was successfully credited!`);
-      depositInput.value = '';
-      saveState();
-      window.switchTabPanel('dashboard');
+      if (!fileInput || !fileInput.files[0]) {
+         alert("Please attach a screenshot of your payment.");
+         return;
+      }
+      if (!methodSelect || !methodSelect.value) {
+         alert("Please select a payment method.");
+         return;
+      }
+
+      const formData = new FormData();
+      formData.append('amount', amount);
+      formData.append('pMethodName', methodSelect.value);
+      formData.append('txnId', txnInput ? txnInput.value : 'N/A');
+      formData.append('notes', 'Added via Dashboard');
+      formData.append('screenshot', fileInput.files[0]);
+
+      try {
+        const btn = e.target.querySelector('button[type="submit"]');
+        const oldText = btn.innerText;
+        btn.innerText = 'Submitting...';
+        btn.disabled = true;
+
+        const res = await fetch(`${API_URL}/wallet/deposit`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        
+        btn.innerText = oldText;
+        btn.disabled = false;
+
+        if (res.ok) {
+          alert(`Recharge request processed! Your deposit of $${formatCurrency(amount)} was submitted for review.`);
+          depositInput.value = '';
+          if(txnInput) txnInput.value = '';
+          if(fileInput) fileInput.value = '';
+          await loadState();
+          window.switchTabPanel('dashboard');
+        } else {
+          const data = await res.json();
+          alert('Error: ' + (data.error || 'Failed to submit'));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Server error connecting to backend.');
+      }
     });
   }
 
   // Withdraw Request Form
   const withdrawForm = document.getElementById('withdraw-form');
   if (withdrawForm) {
-    withdrawForm.addEventListener('submit', (e) => {
+    withdrawForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const withdrawInput = withdrawForm.querySelector('input[type="number"]');
       const amount = parseFloat(withdrawInput.value);
@@ -561,22 +653,55 @@ function initSubPages() {
         return;
       }
       
-      // Perform withdraw
-      appState.balance -= amount;
-      appState.totalWithdraw += amount;
+      const token = localStorage.getItem('my_business_token');
+      if (!token) return;
+
+      const methodSelect = document.getElementById('withdraw-method-select');
+      const titleInput = document.getElementById('withdraw-title-input');
+      const accountInput = document.getElementById('withdraw-account-input');
       
-      // Add withdrawal log entry
-      appState.withdraws.unshift({
-        amount: amount,
-        method: 'Jazzcash',
-        status: 'Completed',
-        date: getCurrentDateString()
-      });
+      const payload = {
+         amount,
+         methodName: methodSelect ? methodSelect.value : 'Bank Transfer',
+         accountTitle: titleInput ? titleInput.value : 'N/A',
+         accountNumber: accountInput ? accountInput.value : 'N/A',
+         notes: 'Requested via UI'
+      };
       
-      alert(`Withdrawal request processed. $${formatCurrency(amount)} was sent to your active account!`);
-      withdrawInput.value = '';
-      saveState();
-      window.switchTabPanel('dashboard');
+      try {
+        const btn = e.target.querySelector('button[type="submit"]');
+        const oldText = btn.innerText;
+        btn.innerText = 'Submitting...';
+        btn.disabled = true;
+
+        const res = await fetch(`${API_URL}/wallet/withdraw`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        btn.innerText = oldText;
+        btn.disabled = false;
+
+        if (res.ok) {
+          alert(`Withdrawal request processed. $${formatCurrency(amount)} was submitted!`);
+          withdrawInput.value = '';
+          if(titleInput) titleInput.value = '';
+          if(accountInput) accountInput.value = '';
+          methodSelect.value = '';
+          await loadState();
+          window.switchTabPanel('dashboard');
+        } else {
+          const data = await res.json();
+          alert('Error: ' + (data.error || 'Submission failed'));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Server error connecting to backend.');
+      }
     });
   }
 }
@@ -654,7 +779,7 @@ window.togglePasswordVisibility = function(inputId, btn) {
 };
 
 // Login submit handler
-window.handleLogin = function(e) {
+window.handleLogin = async function(e) {
   e.preventDefault();
   
   const emailInput = document.getElementById('login-email');
@@ -664,99 +789,80 @@ window.handleLogin = function(e) {
   const password = passwordInput.value;
   
   const errorBox = document.getElementById('auth-error-box');
-  const successBox = document.getElementById('auth-success-box');
   const errorMsg = document.getElementById('auth-error-msg');
   
   errorBox.classList.add('hidden');
-  successBox.classList.add('hidden');
-  
-  // Find user details in local storage array
-  const users = JSON.parse(localStorage.getItem('my_business_users') || '[]');
-  const user = users.find(u => u.email === email && u.password === password);
   
   const btn = e.target.querySelector('button[type="submit"]');
   const btnText = btn.querySelector('.btn-text');
   const spinner = btn.querySelector('.spinner');
   
-  if (!user) {
-    showAdvancedToast("Login Failed", "Invalid email or wrong password.", "error");
-    errorMsg.textContent = "Invalid email or wrong password.";
-    errorBox.classList.remove('hidden');
-    errorBox.classList.add('animate-shake');
-    setTimeout(() => {
-      errorBox.classList.remove('animate-shake');
-    }, 400);
-    return;
-  }
-  
-  // Show spinner
   btn.setAttribute('disabled', 'true');
   btnText.textContent = "Verifying...";
   spinner.classList.remove('hidden');
   
-  setTimeout(() => {
-    // Show advanced Toast for success
+  try {
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+      showAdvancedToast("Login Failed", data.error || data.errors[0].msg, "error");
+      errorMsg.textContent = data.error || data.errors[0].msg;
+      errorBox.classList.remove('hidden');
+      errorBox.classList.add('animate-shake');
+      setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
+      btn.removeAttribute('disabled');
+      btnText.textContent = "Sign In";
+      spinner.classList.add('hidden');
+      return;
+    }
+    
+    // Success
     showAdvancedToast("Welcome Back!", "Successfully logged in to your account.", "success");
+    localStorage.setItem('my_business_token', data.token);
     
-    // Set active session
-    localStorage.setItem('my_business_logged_in_user', email);
-    appState = user.state;
+    btn.removeAttribute('disabled');
+    btnText.textContent = "Sign In";
+    spinner.classList.add('hidden');
     
-    // Wait for Toast, then redirect to home
-    setTimeout(() => {
-      const authLayout = document.getElementById('auth-layout');
-      const dashLayout = document.getElementById('dashboard-layout');
-      
-      authLayout.style.opacity = '0';
-      authLayout.style.transform = 'scale(0.96)';
-      
-      setTimeout(() => {
-        authLayout.classList.add('hidden');
-        
-        dashLayout.classList.remove('hidden');
-        dashLayout.style.opacity = '0';
-        dashLayout.style.transform = 'scale(1.04)';
-        dashLayout.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-        
-        btn.removeAttribute('disabled');
-        btnText.textContent = "Sign In";
-        spinner.classList.add('hidden');
-        
-        updateDOMUserInfo(user.name, user.phone);
-        updateUI();
-        
-        setTimeout(() => {
-          dashLayout.style.opacity = '1';
-          dashLayout.style.transform = 'scale(1)';
-        }, 50);
-        
-      }, 600);
-    }, 1500); // wait for popup duration before hiding auth
+    // Show dashboard immediately — no waiting
+    showDashboard();
     
-  }, 800);
+    // Load user data in background
+    loadState();
+    
+  } catch (err) {
+    console.error(err);
+    showAdvancedToast("Server Error", "Could not connect to backend.", "error");
+    btn.removeAttribute('disabled');
+    btnText.textContent = "Sign In";
+    spinner.classList.add('hidden');
+  }
 };
 
 // Signup registration submit handler
-window.handleSignup = function(e) {
+window.handleSignup = async function(e) {
   e.preventDefault();
   
   const nameInput = document.getElementById('signup-name');
   const emailInput = document.getElementById('signup-email');
-  const phoneInput = document.getElementById('signup-phone');
   const passwordInput = document.getElementById('signup-password');
+  const confirmPasswordInput = document.getElementById('signup-confirm-password');
   
   const name = nameInput.value.trim();
   const email = emailInput.value.trim().toLowerCase();
-  const phone = phoneInput.value.trim();
   const password = passwordInput.value;
+  const confirmPassword = confirmPasswordInput.value;
   
   const errorBox = document.getElementById('auth-error-box');
-  const successBox = document.getElementById('auth-success-box');
   const errorMsg = document.getElementById('auth-error-msg');
-  const successMsg = document.getElementById('auth-success-msg');
   
   errorBox.classList.add('hidden');
-  successBox.classList.add('hidden');
   
   const termsCheckbox = document.getElementById('signup-terms');
   if (termsCheckbox && !termsCheckbox.checked) {
@@ -767,19 +873,8 @@ window.handleSignup = function(e) {
     return;
   }
   
-  if (password.length < 6) {
-    showAdvancedToast("Registration Failed", "Password must be at least 6 characters.", "error");
-    errorBox.classList.remove('hidden');
-    errorBox.classList.add('animate-shake');
-    setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
-    return;
-  }
-  
-  const users = JSON.parse(localStorage.getItem('my_business_users') || '[]');
-  
-  // Check unique email
-  if (users.some(u => u.email === email)) {
-    showAdvancedToast("Registration Failed", "Email is already registered.", "error");
+  if (password !== confirmPassword) {
+    showAdvancedToast("Passwords Mismatch", "Password and Confirm Password do not match.", "error");
     errorBox.classList.remove('hidden');
     errorBox.classList.add('animate-shake');
     setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
@@ -790,77 +885,56 @@ window.handleSignup = function(e) {
   const btnText = btn.querySelector('.btn-text');
   const spinner = btn.querySelector('.spinner');
   
-  // Disable and show spinner
   btn.setAttribute('disabled', 'true');
   btnText.textContent = "Creating Account...";
   spinner.classList.remove('hidden');
   
-  setTimeout(() => {
-    // Show success toast
+  try {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+      showAdvancedToast("Registration Failed", data.error || data.errors[0].msg, "error");
+      errorBox.classList.remove('hidden');
+      errorBox.classList.add('animate-shake');
+      setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
+      btn.removeAttribute('disabled');
+      btnText.textContent = "Register Account";
+      spinner.classList.add('hidden');
+      return;
+    }
+    
     showAdvancedToast("Account Created!", "Registration successful. Entering dashboard...", "success");
+    localStorage.setItem('my_business_token', data.token);
+    
+    // Clean forms immediately
+    nameInput.value = '';
+    emailInput.value = '';
+    passwordInput.value = '';
+    confirmPasswordInput.value = '';
+    
+    btn.removeAttribute('disabled');
+    btnText.textContent = "Register Account";
+    spinner.classList.add('hidden');
 
-    // Create new user state
-    const newUser = {
-      email: email,
-      password: password,
-      name: name,
-      phone: phone,
-      state: {
-        balance: 50.00,
-        totalDeposit: 50.00,
-        totalWithdraw: 0.00,
-        totalProfit: 0.00,
-        lockedEarnings: 0.00,
-        deposits: [
-          { name: 'System Sign Up Bonus', amount: 50.00, status: 'Completed', date: getCurrentDateString() }
-        ],
-        withdraws: []
-      }
-    };
+    // Show dashboard immediately — no waiting
+    showDashboard();
     
-    users.push(newUser);
-    localStorage.setItem('my_business_users', JSON.stringify(users));
-    localStorage.setItem('my_business_logged_in_user', email);
+    // Load user data in background
+    loadState();
     
-    setTimeout(() => {
-      // Transition
-      const authLayout = document.getElementById('auth-layout');
-      const dashLayout = document.getElementById('dashboard-layout');
-      
-      authLayout.style.opacity = '0';
-      authLayout.style.transform = 'scale(0.96)';
-      
-      setTimeout(() => {
-        authLayout.classList.add('hidden');
-        
-        // Clean forms
-        nameInput.value = '';
-        emailInput.value = '';
-        phoneInput.value = '';
-        passwordInput.value = '';
-        
-        dashLayout.classList.remove('hidden');
-        dashLayout.style.opacity = '0';
-        dashLayout.style.transform = 'scale(1.04)';
-        dashLayout.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-        
-        btn.removeAttribute('disabled');
-        btnText.textContent = "Register Account";
-        spinner.classList.add('hidden');
-        
-        appState = newUser.state;
-        updateDOMUserInfo(newUser.name, newUser.phone);
-        updateUI();
-        
-        setTimeout(() => {
-          dashLayout.style.opacity = '1';
-          dashLayout.style.transform = 'scale(1)';
-        }, 50);
-        
-      }, 600);
-    }, 1500); // 1.5s delay to show popup then redirect
-    
-  }, 800);
+  } catch (err) {
+    console.error(err);
+    showAdvancedToast("Server Error", "Could not connect to backend.", "error");
+    btn.removeAttribute('disabled');
+    btnText.textContent = "Register Account";
+    spinner.classList.add('hidden');
+  }
 };
 
 // Logout session user handler
@@ -878,7 +952,7 @@ window.logoutUser = function() {
   
   setTimeout(() => {
     // Clear session
-    localStorage.removeItem('my_business_logged_in_user');
+    localStorage.removeItem('my_business_token');
     
     dashLayout.classList.add('hidden');
     
@@ -888,7 +962,6 @@ window.logoutUser = function() {
     
     // Hide error cards
     document.getElementById('auth-error-box').classList.add('hidden');
-    document.getElementById('auth-success-box').classList.add('hidden');
     
     // Prepare auth page
     authLayout.classList.remove('hidden');

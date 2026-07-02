@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/admin-panel",
+      "destination": "/admin-panel.html"
+    },
+    {
+      "source": "/admin-panel/",
+      "destination": "/admin-panel.html"
+    }
+  ]
+}

@@ -31,7 +31,6 @@
   <!-- AUTH LAYOUT -->
   <div id="auth-layout"
     class="min-h-screen w-full flex items-center justify-center relative overflow-hidden px-4 py-12 bg-[#050a18] transition-all duration-1000 z-50">
-    <!-- Ambient Blur Glows -->
     <div
       class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-650/20 rounded-full blur-[100px] animate-pulse pointer-events-none">
     </div>
@@ -153,21 +152,23 @@
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-[11px] font-semibold text-slate-400">Phone Number (ID)</label>
-              <div class="relative">
-                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">📞</span>
-                <input type="text" id="signup-phone" required placeholder="e.g. 03325700270"
-                  class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
-              </div>
-            </div>
-
-            <div class="space-y-1.5">
               <label class="block text-[11px] font-semibold text-slate-400">Password</label>
               <div class="relative">
                 <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔒</span>
-                <input type="password" id="signup-password" required placeholder="Min 6 characters"
+                <input type="password" id="signup-password" required pattern="(?=.*[A-Z]).{8,}" title="Must be at least 8 characters and include at least 1 Capital letter" placeholder="Min 8 chars, 1 Capital"
                   class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
                 <button type="button" onclick="window.togglePasswordVisibility('signup-password', this)"
+                  class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-350 cursor-pointer text-xs select-none">👁️</button>
+              </div>
+            </div>
+
+            <div class="space-y-1.5 mt-3">
+              <label class="block text-[11px] font-semibold text-slate-400">Confirm Password</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔒</span>
+                <input type="password" id="signup-confirm-password" required placeholder="Repeat Password"
+                  class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
+                <button type="button" onclick="window.togglePasswordVisibility('signup-confirm-password', this)"
                   class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-350 cursor-pointer text-xs select-none">👁️</button>
               </div>
             </div>
@@ -308,8 +309,8 @@
 
         <!-- DASHBOARD TAB -->
         <section id="tab-dashboard" class="tab-section space-y-6">
-          <!-- 4 Top Cards -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- 3 Top Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- Card 1 -->
             <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex items-center justify-between">
               <div>
@@ -321,17 +322,7 @@
                 class="w-11 h-11 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center text-xl">
                 💳</div>
             </div>
-            <!-- Card 2 -->
-            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex items-center justify-between">
-              <div>
-                <p class="text-xs text-slate-455 tracking-wider font-semibold uppercase">Total Deposit</p>
-                <h3 id="stat-total-deposit" class="text-xl font-bold text-white mt-1">0.00 USD</h3>
-                <span class="text-[10px] text-indigo-400 font-medium mt-1 inline-block">0.00+ USD</span>
-              </div>
-              <div class="w-11 h-11 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center text-xl">📥
-              </div>
-            </div>
-            <!-- Card 3 -->
+            <!-- Card 2 (Was Withdraw) -->
             <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex items-center justify-between">
               <div>
                 <p class="text-xs text-slate-455 tracking-wider font-semibold uppercase">Total Withdraw</p>
@@ -674,27 +665,20 @@
         <!-- DEPOSIT TAB -->
         <section id="tab-deposit"
           class="tab-section hidden max-w-lg mx-auto bg-[#0d162d] border border-[#152243] p-6 rounded-2xl">
-          <h2 class="text-xl font-bold text-white mb-4">Request Deposit</h2>
-          <form id="deposit-form" class="space-y-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Amount (USD)</label>
-              <input id="deposit-amount-input" type="number" required placeholder="50.00"
-                class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
-            </div>
-            <div class="grid grid-cols-4 gap-2">
-              <button type="button" data-val="100"
-                class="preset-deposit-amount bg-[#152243] hover:bg-slate-700 text-white rounded-lg py-2 text-xs font-medium cursor-pointer">$100</button>
-              <button type="button" data-val="500"
-                class="preset-deposit-amount bg-[#152243] hover:bg-slate-700 text-white rounded-lg py-2 text-xs font-medium cursor-pointer">$500</button>
-              <button type="button" data-val="1000"
-                class="preset-deposit-amount bg-[#152243] hover:bg-slate-700 text-white rounded-lg py-2 text-xs font-medium cursor-pointer">$1000</button>
-              <button type="button" data-val="5000"
-                class="preset-deposit-amount bg-[#152243] hover:bg-slate-700 text-white rounded-lg py-2 text-xs font-medium cursor-pointer">$5000</button>
-            </div>
-            <button type="submit"
-              class="w-full bg-indigo-650 hover:bg-indigo-600 text-white rounded-xl py-3.5 text-sm font-semibold transition-all cursor-pointer">Submit
-              Deposit</button>
-          </form>
+          <h2 class="text-xl font-bold text-white mb-4">Make a Deposit</h2>
+          
+          <div class="bg-indigo-900/20 border border-indigo-500/30 p-6 flex flex-col items-center rounded-xl text-center">
+             <p class="text-slate-300 text-sm mb-5">Please transfer the amount manually to the designated agent account carefully:</p>
+             <div class="bg-indigo-950/80 w-full sm:w-3/4 p-5 rounded-2xl border border-indigo-500/50 text-center shadow-[0_0_20px_rgba(99,102,241,0.15)] mb-3 relative overflow-hidden group">
+                 <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                 <p class="text-[10px] text-indigo-300 uppercase tracking-widest font-black mb-1.5 opacity-80">Bank / Provider</p>
+                 <p class="text-lg font-bold text-emerald-400 mb-4">SadaPay</p>
+                 
+                 <p class="text-[10px] text-indigo-300 uppercase tracking-widest font-black mb-1.5 opacity-80">Account Number</p>
+                 <p class="text-3xl font-black text-white tracking-widest tabular-nums">03020463118</p>
+             </div>
+             <p class="text-xs text-slate-400 mt-6 leading-relaxed">Once you have successfully transferred the funds, your account will be manually credited shortly. Do not share your password with anyone.</p>
+          </div>
         </section>
 
         <!-- WITHDRAW TAB -->
@@ -704,9 +688,33 @@
           <form id="withdraw-form" class="space-y-4">
             <div>
               <label class="block text-xs font-semibold text-slate-400 mb-1.5">Payout Amount (USD)</label>
-              <input type="number" required placeholder="Min 10.00"
+              <input id="withdraw-amount-input" type="number" required placeholder="Min 10.00"
                 class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
             </div>
+            
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select Withdraw Method</label>
+              <select id="withdraw-method-select" required class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
+                <option value="">Select Method</option>
+                <option value="JazzCash">JazzCash</option>
+                <option value="EasyPaisa">EasyPaisa</option>
+                <option value="Bank">Bank Transfer</option>
+                <option value="Crypto">Crypto Wallet</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Account Title / Name</label>
+              <input id="withdraw-title-input" type="text" required placeholder="e.g. John Doe"
+                class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
+            </div>
+            
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Account Number / IBAN</label>
+              <input id="withdraw-account-input" type="text" required placeholder="03XXXXXXXXX / PK00..."
+                class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
+            </div>
+
             <button type="submit"
               class="w-full bg-indigo-650 hover:bg-indigo-605 text-white rounded-xl py-3.5 text-sm font-semibold transition-all cursor-pointer">Request
               Payout</button>
