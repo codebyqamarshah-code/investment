@@ -1,0 +1,245 @@
+@import "tailwindcss";
+@import "./responsive.css";
+
+/* Base variables & styles */
+:root {
+  --bg-main: #060b19;
+  --bg-card: #0d162d;
+  --bg-sidebar: #040813;
+  --border-slate: #152243;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Interactive Card Effects */
+.feature-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f660;
+  box-shadow: 0 12px 24px -10px rgba(59, 130, 246, 0.15);
+}
+
+/* Custom Button Ripple Effect */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+.ripple {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-effect 0.6s linear;
+  pointer-events: none;
+}
+@keyframes ripple-effect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Active sidebar link style */
+.sidebar-link.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+/* Custom indicator dots for slider */
+.slider-dot {
+  transition: all 0.3s ease;
+}
+.slider-dot.active {
+  width: 24px;
+  background-color: #ffffff;
+}
+
+/* Login/SignUp custom animations and effects */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes pulse-light {
+  0%, 100% { box-shadow: 0 0 15px rgba(79, 70, 229, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(79, 70, 229, 0.45); }
+}
+.animate-pulse-light {
+  animation: pulse-light 2.5s ease-in-out infinite;
+}
+
+.dashboard-transition {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom Input Focus Underline Expand styling */
+.focus-line {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4f46e5, #a855f7);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+.input-group:focus-within .focus-line {
+  width: 100%;
+}
+.input-group:focus-within svg {
+  color: #818cf8 !important;
+}
+
+/* Password strength dynamic indicator spacing and styles */
+.strength-bar {
+  height: 4px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Custom checkmark animated success ring */
+.success-checkmark {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+}
+.success-checkmark .check-icon {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  border-radius: 50%;
+  box-sizing: content-box;
+  border: 4px solid #10b981;
+}
+.success-checkmark .check-icon::after {
+  content: '';
+  position: absolute;
+  background: #0d162d;
+  width: 60px;
+  height: 120px;
+  left: 45px;
+  top: -12px;
+  transform: rotate(-45deg);
+}
+.success-checkmark .check-icon .icon-line {
+  height: 5px;
+  background-color: #10b981;
+  display: block;
+  border-radius: 2px;
+  position: absolute;
+  z-index: 10;
+}
+.success-checkmark .check-icon .icon-line.line-tip {
+  top: 46px;
+  left: 14px;
+  width: 25px;
+  transform: rotate(45deg);
+}
+.success-checkmark .check-icon .icon-line.line-long {
+  top: 38px;
+  right: 8px;
+  width: 47px;
+  transform: rotate(-45deg);
+}
+.success-checkmark .icon-circle {
+  top: -4px;
+  left: -4px;
+  z-index: 10;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid rgba(16, 185, 129, 0.2);
+  box-sizing: content-box;
+  position: absolute;
+}
+.success-checkmark .icon-fix {
+  top: 8px;
+  width: 5px;
+  left: 28px;
+  z-index: 1;
+  height: 85px;
+  position: absolute;
+  transform: rotate(-45deg);
+  background-color: #0d162d;
+}
+
+/* Custom Notification Toast animation */
+.toast-container {
+  pointer-events: none;
+}
+.toast-msg {
+  pointer-events: auto;
+  animation: toast-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.3s ease;
+}
+.toast-msg.toast-out {
+  animation: toast-out 0.3s ease forwards;
+}
+@keyframes toast-in {
+  from {
+    transform: translateY(-20px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes toast-out {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-20px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Wave Scanner linear loading line */
+@keyframes loading-scan {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+.loading-scanner-line {
+  position: absolute;
+  top: 0;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, #818cf8, #a855f7, transparent);
+  animation: loading-scan 2s infinite linear;
+}
+

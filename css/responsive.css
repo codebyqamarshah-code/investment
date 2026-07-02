@@ -1,0 +1,15 @@
+/* Responsive styles */
+
+@media (max-width: 1023px) {
+  /* Mobile padding adjustments */
+  .main-content {
+    padding-bottom: 72px; /* space for sticky bottom navigation */
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop layout tweaks */
+  .main-content {
+    margin-left: 260px; /* leaves room for fixed sidebar */
+  }
+}

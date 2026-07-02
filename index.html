@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Business - Dashboard</title>
+  <link rel="stylesheet" href="./css/output.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #050a18;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-family: 'Outfit', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-[#050a18] text-slate-200 min-h-screen flex flex-col">
+
+  <!-- AUTH LAYOUT -->
+  <div id="auth-layout"
+    class="min-h-screen w-full flex items-center justify-center relative overflow-hidden px-4 py-12 bg-[#050a18] transition-all duration-1000 z-50">
+    <!-- Ambient Blur Glows -->
+    <div
+      class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-650/20 rounded-full blur-[100px] animate-pulse pointer-events-none">
+    </div>
+    <div
+      class="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-600/20 rounded-full blur-[100px] animate-pulse pointer-events-none"
+      style="animation-delay: 2s;"></div>
+    <div
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none">
+    </div>
+
+    <!-- Auth Card -->
+    <div id="auth-card"
+      class="w-full max-w-[440px] bg-[#0d162d]/65 backdrop-blur-xl border border-[#152243] rounded-3xl p-6 md:p-8 shadow-[0_0_50px_rgba(79,70,229,0.15)] relative z-10 transition-all duration-300">
+
+      <!-- Brand Header -->
+      <div class="flex flex-col items-center mb-6">
+        <div
+          class="w-12 h-12 bg-indigo-600/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(79,70,229,0.2)]">
+          <svg class="w-7 h-7 text-indigo-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <h1 class="text-xl font-extrabold text-white tracking-tight">My Business</h1>
+        <p id="auth-subtitle" class="text-xs text-slate-450 mt-1 text-center">Login to your dashboard to manage capital
+          operations</p>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="relative flex bg-[#050a18] border border-[#152243] p-1 rounded-xl mb-6">
+        <div id="auth-tab-glow"
+          class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-gradient-to-r from-indigo-600 to-violet-600 rounded-lg transition-all duration-350 ease-out shadow-lg shadow-indigo-600/30">
+        </div>
+        <button id="tab-login" onclick="toggleAuthMode('login')"
+          class="flex-1 py-1.5 text-xs font-semibold text-white relative z-10 focus:outline-none transition-colors duration-305 cursor-pointer">Login</button>
+        <button id="tab-signup" onclick="toggleAuthMode('signup')"
+          class="flex-1 py-1.5 text-xs font-semibold text-slate-500 relative z-10 focus:outline-none transition-colors duration-305 cursor-pointer">Sign
+          Up</button>
+      </div>
+
+      <!-- Error Message Box -->
+      <div id="auth-error-box"
+        class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-[11px] flex items-center gap-2.5">
+        <span>⚠️</span>
+        <span id="auth-error-msg">Incorrect credentials or missing input.</span>
+      </div>
+
+      <!-- Success Message Box -->
+      <div id="auth-success-box"
+        class="hidden mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-[11px] flex items-center gap-2.5">
+        <span>✅</span>
+        <span id="auth-success-msg">Welcome back! Loading your dashboard...</span>
+      </div>
+
+      <!-- Forms Container (Horizontal slider) -->
+      <div class="w-full overflow-hidden">
+        <div id="auth-form-slider" class="flex w-[200%] transition-transform duration-500 ease-out translate-x-0">
+
+          <!-- LOGIN FORM -->
+          <form id="form-login" onsubmit="handleLogin(event)" class="w-1/2 pr-3 space-y-4">
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-semibold text-slate-400">Email Address</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">📧</span>
+                <input type="email" id="login-email" required placeholder="name@domain.com"
+                  class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-center">
+                <label class="block text-[11px] font-semibold text-slate-400">Password</label>
+                <a href="#" onclick="alert('Password reset link has been simulated & printed to server console!')"
+                  class="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors font-medium">Forgot
+                  Password?</a>
+              </div>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔒</span>
+                <input type="password" id="login-password" required placeholder="••••••••"
+                  class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
+                <button type="button" onclick="window.togglePasswordVisibility('login-password', this)"
+                  class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-350 cursor-pointer text-xs select-none">👁️</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center gap-2 text-[11px] text-slate-450 cursor-pointer select-none">
+                <input type="checkbox" id="login-remember"
+                  class="w-3.5 h-3.5 rounded border-[#152243] bg-[#050a18] text-indigo-650 focus:ring-0 cursor-pointer">
+                Remember Me
+              </label>
+            </div>
+
+            <button type="submit"
+              class="w-full bg-[#4f46e5] hover:bg-indigo-600 text-white rounded-xl py-3 text-xs font-bold transition-all duration-300 transform active:scale-98 shadow-lg shadow-indigo-600/20 cursor-pointer flex items-center justify-center gap-2">
+              <span class="btn-text">Sign In</span>
+              <div class="spinner hidden w-4.5 h-4.5 border-2 border-white/30 border-t-white rounded-full animate-spin">
+              </div>
+            </button>
+          </form>
+
+          <!-- SIGN UP FORM -->
+          <form id="form-signup" onsubmit="handleSignup(event)" class="w-1/2 pl-3 space-y-4">
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-semibold text-slate-400">Full Name</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">👤</span>
+                <input type="text" id="signup-name" required placeholder="John Doe"
+                  class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-semibold text-slate-400">Email Address</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">📧</span>
+                <input type="email" id="signup-email" required placeholder="john@example.com"
+                  class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-semibold text-slate-400">Phone Number (ID)</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">📞</span>
+                <input type="text" id="signup-phone" required placeholder="e.g. 03325700270"
+                  class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-semibold text-slate-400">Password</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔒</span>
+                <input type="password" id="signup-password" required placeholder="Min 6 characters"
+                  class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
+                <button type="button" onclick="window.togglePasswordVisibility('signup-password', this)"
+                  class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-350 cursor-pointer text-xs select-none">👁️</button>
+              </div>
+            </div>
+
+            <div class="pt-1">
+              <label class="flex items-start gap-2 text-[10px] text-slate-450 cursor-pointer select-none">
+                <input type="checkbox" required
+                  class="w-3.5 h-3.5 mt-0.5 rounded border-[#152243] bg-[#050a18] text-indigo-650 focus:ring-0 cursor-pointer">
+                <span>I accept <a href="#" class="text-indigo-400 hover:underline">Terms of Service</a></span>
+              </label>
+            </div>
+
+            <button type="submit"
+              class="w-full bg-gradient-to-r from-violet-600 to-indigo-650 hover:from-violet-500 hover:to-indigo-600 text-white rounded-xl py-3 text-xs font-bold transition-all duration-300 transform active:scale-98 shadow-lg shadow-violet-650/20 cursor-pointer flex items-center justify-center gap-2">
+              <span class="btn-text">Register Account</span>
+              <div class="spinner hidden w-4.5 h-4.5 border-2 border-white/30 border-t-white rounded-full animate-spin">
+              </div>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD LAYOUT -->
+  <div id="dashboard-layout" class="hidden w-full flex min-h-screen dashboard-transition origin-center">
+
+    <!-- Desktop Left Sidebar -->
+    <aside id="sidebar"
+      class="w-[260px] bg-[#040813] border-r border-[#152243] flex-shrink-0 fixed h-full top-0 left-0 transition-transform duration-350 z-45 -translate-x-full lg:translate-x-0 flex flex-col justify-between p-5">
+      <div class="space-y-6">
+        <div class="flex items-center gap-3 py-2 px-1">
+          <svg class="w-8 h-8 text-indigo-500" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <span class="text-xl font-bold tracking-tight text-white">My Business</span>
+        </div>
+
+        <nav class="space-y-1">
+          <a href="#" data-tab="dashboard"
+            class="sidebar-link active flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+            <span>📊</span> Dashboard
+          </a>
+          <a href="#" data-tab="assets"
+            class="sidebar-link text-slate-400 hover:text-white flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+            <span>💼</span> Assets
+          </a>
+          <a href="#" data-tab="plans"
+            class="sidebar-link text-slate-400 hover:text-white flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+            <span>📈</span> Plans
+          </a>
+          <a href="#" data-tab="deposit"
+            class="sidebar-link text-slate-400 hover:text-white flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+            <span>📥</span> Deposit
+          </a>
+          <a href="#" data-tab="withdraw"
+            class="sidebar-link text-slate-400 hover:text-white flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+            <span>📤</span> Withdraw
+          </a>
+          <a href="#" data-tab="team"
+            class="sidebar-link text-slate-400 hover:text-white flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+            <span>👥</span> Team
+          </a>
+          <a href="#" data-tab="invite"
+            class="sidebar-link text-slate-400 hover:text-white flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+            <span>🎁</span> Invite
+          </a>
+          <a href="#" data-tab="profile"
+            class="sidebar-link text-slate-400 hover:text-white flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+            <span>👤</span> Profile
+          </a>
+          <a href="#" data-tab="logout"
+            class="sidebar-link text-slate-450 hover:text-red-400 flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all mt-6">
+            <span>🚪</span> Logout
+          </a>
+        </nav>
+      </div>
+
+      <!-- Refer & Earn Widget -->
+      <div
+        class="bg-gradient-to-br from-indigo-900/40 to-violet-900/20 border border-indigo-950 p-4 rounded-2xl relative overflow-hidden mt-4">
+        <h3 class="font-bold text-sm text-white mb-1">Refer & Earn</h3>
+        <p class="text-xs text-slate-400 mb-3">Invite your friends and earn unlimited</p>
+        <img src="./assets/images/refer_earn.png" alt="Promo"
+          class="w-full h-24 object-contain rounded-lg mb-2 bg-[#050a18]/40">
+        <button onclick="switchTab('invite')"
+          class="w-full bg-indigo-650 hover:bg-indigo-650 text-white rounded-xl py-2 px-3 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer">
+          Invite Now <span>→</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex flex-col min-h-screen lg:pl-[260px] pb-16 lg:pb-0">
+
+      <!-- Top Header -->
+      <header
+        class="bg-[#050a18]/80 backdrop-blur-md border-b border-[#152243] h-16 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
+        <div class="flex items-center gap-4">
+          <button id="menu-toggle" class="lg:hidden text-slate-400 hover:text-white cursor-pointer text-2xl">
+            ☰
+          </button>
+          <div class="hidden md:flex items-center bg-[#0d162d] border border-[#152243] rounded-xl px-3.5 py-1.5 w-72">
+            <span class="text-slate-500 mr-2">🔍</span>
+            <input type="text" placeholder="Search here..."
+              class="bg-transparent border-none text-sm text-slate-200 outline-none w-full">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Notification -->
+          <button
+            class="relative bg-[#0d162d] border border-[#152243] w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white cursor-pointer">
+            🔔
+            <span
+              class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-[10px] text-white font-bold flex items-center justify-center rounded-full">1</span>
+          </button>
+
+          <!-- User Dropdown -->
+          <div class="flex items-center gap-2.5">
+            <div id="user-header-initial"
+              class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white font-semibold text-sm">
+              JS
+            </div>
+            <div class="hidden sm:block text-left text-xs">
+              <p id="user-header-name" class="font-bold text-slate-200">John Smith</p>
+              <p id="user-header-id" class="text-slate-400 font-medium font-mono">ID: 03325700270</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="flex-1 p-4 lg:p-8">
+
+        <!-- DASHBOARD TAB -->
+        <section id="tab-dashboard" class="tab-section space-y-6">
+          <!-- 4 Top Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Card 1 -->
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex items-center justify-between">
+              <div>
+                <p class="text-xs text-slate-455 tracking-wider font-semibold uppercase">Balance</p>
+                <h3 id="stat-balance" class="text-xl font-bold text-white mt-1">0.00 USD</h3>
+                <span class="text-[10px] text-indigo-400 font-medium mt-1 inline-block">0.00+ USD Deposit</span>
+              </div>
+              <div
+                class="w-11 h-11 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center text-xl">
+                💳</div>
+            </div>
+            <!-- Card 2 -->
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex items-center justify-between">
+              <div>
+                <p class="text-xs text-slate-455 tracking-wider font-semibold uppercase">Total Deposit</p>
+                <h3 id="stat-total-deposit" class="text-xl font-bold text-white mt-1">0.00 USD</h3>
+                <span class="text-[10px] text-indigo-400 font-medium mt-1 inline-block">0.00+ USD</span>
+              </div>
+              <div class="w-11 h-11 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center text-xl">📥
+              </div>
+            </div>
+            <!-- Card 3 -->
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex items-center justify-between">
+              <div>
+                <p class="text-xs text-slate-455 tracking-wider font-semibold uppercase">Total Withdraw</p>
+                <h3 id="stat-total-withdraw" class="text-xl font-bold text-white mt-1">0.00 USD</h3>
+                <span class="text-[10px] text-green-400 font-medium mt-1 inline-block">0.00+ USD</span>
+              </div>
+              <div
+                class="w-11 h-11 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center text-xl">
+                📤</div>
+            </div>
+            <!-- Card 4 -->
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex items-center justify-between">
+              <div>
+                <p class="text-xs text-slate-455 tracking-wider font-semibold uppercase">Total Profit</p>
+                <h3 id="stat-total-profit" class="text-xl font-bold text-white mt-1">0.00 USD</h3>
+                <span class="text-[10px] text-amber-500 font-medium mt-1 inline-block">0.00+ USD</span>
+              </div>
+              <div class="w-11 h-11 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center text-xl">
+                📊</div>
+            </div>
+          </div>
+
+          <!-- Carousel Slider -->
+          <div id="mining-slider"
+            class="relative overflow-hidden rounded-2xl h-[160px] sm:h-[260px] group border border-[#152243]">
+            <div class="slider-wrapper flex h-full transition-transform duration-500 ease-out select-none">
+              <div class="slider-slide min-w-full h-full relative">
+                <img src="./assets/images/mining_banner_1.png" alt="Banner 1" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent flex items-end p-6">
+                  <div>
+                    <h2 class="text-xl font-bold text-white">Large Quarry Operations</h2>
+                    <p class="text-xs text-slate-350">State of the art mining machinery yielding maximum returns</p>
+                  </div>
+                </div>
+              </div>
+              <div class="slider-slide min-w-full h-full relative">
+                <img src="./assets/images/mining_banner_2.png" alt="Banner 2" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent flex items-end p-6">
+                  <div>
+                    <h2 class="text-xl font-bold text-white">Continuous Mining Excavators</h2>
+                    <p class="text-xs text-slate-350">Eco-conscious power generators running continuously</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Slider Nav -->
+            <button
+              class="slider-prev absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-slate-800 transition-all opacity-0 group-hover:opacity-100 cursor-pointer">⟨</button>
+            <button
+              class="slider-next absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-slate-800 transition-all opacity-0 group-hover:opacity-100 cursor-pointer">⟩</button>
+            <div class="slider-dots absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10"></div>
+          </div>
+
+          <!-- Favorite Plans -->
+          <div>
+            <h2 class="text-lg font-bold text-white mb-4">Investment Plans</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Plan 1 -->
+              <div
+                class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex flex-col justify-between h-[280px] hover:border-indigo-500/30 transition-all">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="font-bold text-slate-100 text-base">Jazzcash</h3>
+                    <p class="text-xl font-extrabold text-amber-500 mt-1">$ 500.00</p>
+                    <p class="text-xs text-slate-450 mt-0.5">Duration: 20 Day</p>
+                  </div>
+                  <div
+                    class="w-10 h-10 rounded-xl bg-orange-600/10 text-orange-500 flex items-center justify-center font-bold text-xs uppercase p-1">
+                    Jazz</div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 border-t border-b border-[#152243] py-3.5 my-3.5 text-xs">
+                  <div>
+                    <p class="text-slate-455">Daily Profit</p>
+                    <p class="font-bold text-slate-205 mt-0.5">$55.00</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-455">Total Profit</p>
+                    <p class="font-bold text-slate-205 mt-0.5">1100 USD</p>
+                  </div>
+                </div>
+                <button onclick="openInvestModal('Jazzcash', '$ 500.00')"
+                  class="w-full bg-indigo-650 hover:bg-indigo-650/90 text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer ripple-btn">Invest
+                  Now</button>
+              </div>
+              <!-- Plan 2 -->
+              <div
+                class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex flex-col justify-between h-[280px] hover:border-indigo-500/30 transition-all">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="font-bold text-slate-100 text-base">Premium One</h3>
+                    <p class="text-xl font-extrabold text-amber-500 mt-1">$ 1,500.00</p>
+                    <p class="text-xs text-slate-450 mt-0.5">Duration: 28 Day</p>
+                  </div>
+                  <div
+                    class="w-10 h-10 rounded-xl bg-rose-600/10 text-rose-500 flex items-center justify-center font-bold text-xs uppercase p-1">
+                    💎</div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 border-t border-b border-[#152243] py-3.5 my-3.5 text-xs">
+                  <div>
+                    <p class="text-slate-455">Daily Profit</p>
+                    <p class="font-bold text-slate-205 mt-0.5">$165.00</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-455">Total Profit</p>
+                    <p class="font-bold text-slate-205 mt-0.5">4620 USD</p>
+                  </div>
+                </div>
+                <button onclick="openInvestModal('Premium One', '$ 1,500.00')"
+                  class="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer ripple-btn">Invest
+                  Now</button>
+              </div>
+              <!-- Plan 3 -->
+              <div
+                class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex flex-col justify-between h-[280px] hover:border-indigo-500/30 transition-all">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="font-bold text-slate-100 text-base">Premium Two</h3>
+                    <p class="text-xl font-extrabold text-amber-500 mt-1">$ 3,500.00</p>
+                    <p class="text-xs text-slate-450 mt-0.5">Duration: 165 Day</p>
+                  </div>
+                  <div
+                    class="w-10 h-10 rounded-xl bg-rose-600/10 text-rose-500 flex items-center justify-center font-bold text-xs uppercase p-1">
+                    💎</div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 border-t border-b border-[#152243] py-3.5 my-3.5 text-xs">
+                  <div>
+                    <p class="text-slate-455">Daily Profit</p>
+                    <p class="font-bold text-slate-205 mt-0.5">$165.00</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-455">Total Profit</p>
+                    <p class="font-bold text-slate-205 mt-0.5">27225 USD</p>
+                  </div>
+                </div>
+                <button onclick="openInvestModal('Premium Two', '$ 3,500.00')"
+                  class="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer ripple-btn">Invest
+                  Now</button>
+              </div>
+              <!-- Plan 4 -->
+              <div
+                class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl flex flex-col justify-between h-[280px] hover:border-indigo-500/30 transition-all">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="font-bold text-slate-100 text-base">Premium Three</h3>
+                    <p class="text-xl font-extrabold text-amber-500 mt-1">$ 5,500.00</p>
+                    <p class="text-xs text-slate-450 mt-0.5">Duration: 365 Day</p>
+                  </div>
+                  <div
+                    class="w-10 h-10 rounded-xl bg-rose-600/10 text-rose-500 flex items-center justify-center font-bold text-xs uppercase p-1">
+                    💎</div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 border-t border-b border-[#152243] py-3.5 my-3.5 text-xs">
+                  <div>
+                    <p class="text-slate-455">Daily Profit</p>
+                    <p class="font-bold text-slate-205 mt-0.5">$165.00</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-455">Total Profit</p>
+                    <p class="font-bold text-slate-205 mt-0.5">60125 USD</p>
+                  </div>
+                </div>
+                <button onclick="openInvestModal('Premium Three', '$ 5,500.00')"
+                  class="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer ripple-btn">Invest
+                  Now</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Grid containing Team Overview, Latest Deposits, Latest Withdraws -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Team Overview -->
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl space-y-4">
+              <h2 class="font-bold text-slate-100 text-base">Team Overview</h2>
+              <div class="grid grid-cols-4 gap-2 text-center py-2 bg-[#050a18]/40 rounded-xl border border-[#152243]">
+                <div>
+                  <span class="text-xs block">👤</span>
+                  <span class="block text-sm font-bold text-slate-200 mt-0.5">0</span>
+                  <span class="text-[9px] text-slate-450 block">Team Size</span>
+                </div>
+                <div>
+                  <span class="text-xs block">💳</span>
+                  <span class="block text-sm font-bold text-slate-200 mt-0.5">0</span>
+                  <span class="text-[9px] text-slate-450 block">Income (Rs)</span>
+                </div>
+                <div>
+                  <span class="text-xs block">👑</span>
+                  <span class="block text-sm font-bold text-slate-200 mt-0.5">0</span>
+                  <span class="text-[9px] text-slate-450 block">Today Join</span>
+                </div>
+                <div>
+                  <span class="text-xs block">💰</span>
+                  <span class="block text-sm font-bold text-slate-200 mt-0.5">0</span>
+                  <span class="text-[9px] text-slate-450 block">Today Profit</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <div class="bg-indigo-650 p-3 rounded-xl text-center text-white">
+                  <span class="text-[9px] font-semibold uppercase block opacity-80">Level 01</span>
+                  <span class="block font-bold text-sm mt-1">0</span>
+                  <span class="text-[9px] block opacity-70">Total People</span>
+                </div>
+                <div class="bg-[#1c223c] border border-slate-700/50 p-3 rounded-xl text-center text-slate-200">
+                  <span class="text-[9px] font-semibold uppercase block text-slate-400">Level 02</span>
+                  <span class="block font-bold text-sm mt-1">0</span>
+                  <span class="text-[9px] block text-slate-400">Total People</span>
+                </div>
+                <div class="bg-amber-500 p-3 rounded-xl text-center text-slate-950">
+                  <span class="text-[9px] font-semibold uppercase block opacity-80">Level 03</span>
+                  <span class="block font-bold text-sm mt-1">0</span>
+                  <span class="text-[9px] block opacity-70">Total People</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Latest Deposits -->
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl space-y-3">
+              <div class="flex justify-between items-center">
+                <h2 class="font-bold text-slate-100 text-base">Latest Deposits</h2>
+                <button onclick="seeAllDeposits()"
+                  class="text-xs text-indigo-400 font-semibold hover:underline cursor-pointer">See All</button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs min-w-[300px]">
+                  <thead>
+                    <tr class="border-b border-[#152243] text-slate-455">
+                      <th class="pb-2 font-medium">Name</th>
+                      <th class="pb-2 font-medium text-right">Amount</th>
+                      <th class="pb-2 font-medium text-center">Status</th>
+                      <th class="pb-2 font-medium text-right">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="deposits-table-body" class="divide-y divide-[#152243]/50">
+                    <tr>
+                      <td class="py-2.5 text-slate-350">John Smith</td>
+                      <td class="py-2.5 text-right font-semibold text-slate-250">$500.00</td>
+                      <td class="py-2.5 text-center"><span
+                          class="bg-emerald-500/10 text-emerald-400 leading-none px-2 py-0.5 rounded text-[10px]">Completed</span>
+                      </td>
+                      <td class="py-2.5 text-right text-slate-500">2 May 2024</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 text-slate-350">Michael Lee</td>
+                      <td class="py-2.5 text-right font-semibold text-slate-250">$1,000.00</td>
+                      <td class="py-2.5 text-center"><span
+                          class="bg-emerald-500/10 text-emerald-400 leading-none px-2 py-0.5 rounded text-[10px]">Completed</span>
+                      </td>
+                      <td class="py-2.5 text-right text-slate-500">2 May 2024</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 text-slate-350">David Brown</td>
+                      <td class="py-2.5 text-right font-semibold text-slate-250">$750.00</td>
+                      <td class="py-2.5 text-center"><span
+                          class="bg-emerald-500/10 text-emerald-400 leading-none px-2 py-0.5 rounded text-[10px]">Completed</span>
+                      </td>
+                      <td class="py-2.5 text-right text-slate-500">1 May 2024</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Latest Withdraws -->
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl space-y-3">
+              <div class="flex justify-between items-center">
+                <h2 class="font-bold text-slate-100 text-base">Latest Withdraws</h2>
+                <button onclick="seeAllWithdraws()"
+                  class="text-xs text-indigo-400 font-semibold hover:underline cursor-pointer">See All</button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs min-w-[300px]">
+                  <thead>
+                    <tr class="border-b border-[#152243] text-slate-455">
+                      <th class="pb-2 font-medium">Amount</th>
+                      <th class="pb-2 font-medium text-center">Method</th>
+                      <th class="pb-2 font-medium text-center">Status</th>
+                      <th class="pb-2 font-medium text-right">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="withdraws-table-body" class="divide-y divide-[#152243]/50">
+                    <tr>
+                      <td class="py-2.5 font-semibold text-slate-250">$200.00</td>
+                      <td class="py-2.5 text-center text-slate-350">Jazzcash</td>
+                      <td class="py-2.5 text-center"><span
+                          class="bg-emerald-500/10 text-emerald-400 leading-none px-2 py-0.5 rounded text-[10px]">Completed</span>
+                      </td>
+                      <td class="py-2.5 text-right text-slate-500">2 May 2024</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 font-semibold text-slate-250">$350.00</td>
+                      <td class="py-2.5 text-center text-slate-350">Easypaisa</td>
+                      <td class="py-2.5 text-center"><span
+                          class="bg-emerald-500/10 text-emerald-400 leading-none px-2 py-0.5 rounded text-[10px]">Completed</span>
+                      </td>
+                      <td class="py-2.5 text-right text-slate-500">2 May 2024</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 font-semibold text-slate-250">$500.00</td>
+                      <td class="py-2.5 text-center text-slate-350">Bank</td>
+                      <td class="py-2.5 text-center"><span
+                          class="bg-emerald-500/10 text-emerald-400 leading-none px-2 py-0.5 rounded text-[10px]">Completed</span>
+                      </td>
+                      <td class="py-2.5 text-right text-slate-500">1 May 2024</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ASSETS TAB -->
+        <section id="tab-assets" class="tab-section hidden space-y-6">
+          <h2 class="text-xl font-bold text-white">Assets Balance Details</h2>
+          <div class="bg-[#0d162d] border border-[#152243] p-6 rounded-2xl">
+            <p class="text-sm text-slate-400">Total Asset Valuation</p>
+            <h1 id="assets-total-valuation" class="text-3xl font-extrabold text-white mt-2">$0.00 USD</h1>
+            <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-[#152243]">
+              <div>
+                <p class="text-xs text-slate-400">Locked Earnings</p>
+                <h3 id="assets-locked-earnings" class="text-lg font-bold text-slate-200 mt-1">$0.00</h3>
+              </div>
+              <div>
+                <p class="text-xs text-slate-400">Withdrawable Balance</p>
+                <h3 id="assets-withdrawable-balance" class="text-lg font-bold text-indigo-400 mt-1">$0.00</h3>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PLANS TAB -->
+        <section id="tab-plans" class="tab-section hidden space-y-6">
+          <h2 class="text-xl font-bold text-white font-heading">Available Investment Options</h2>
+          <p class="text-sm text-slate-400">Generate stable high-growth returns directly to your wallet.</p>
+          <!-- Cards repeating with invest buttons -->
+        </section>
+
+        <!-- DEPOSIT TAB -->
+        <section id="tab-deposit"
+          class="tab-section hidden max-w-lg mx-auto bg-[#0d162d] border border-[#152243] p-6 rounded-2xl">
+          <h2 class="text-xl font-bold text-white mb-4">Request Deposit</h2>
+          <form id="deposit-form" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Amount (USD)</label>
+              <input id="deposit-amount-input" type="number" required placeholder="50.00"
+                class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+              <button type="button" data-val="100"
+                class="preset-deposit-amount bg-[#152243] hover:bg-slate-700 text-white rounded-lg py-2 text-xs font-medium cursor-pointer">$100</button>
+              <button type="button" data-val="500"
+                class="preset-deposit-amount bg-[#152243] hover:bg-slate-700 text-white rounded-lg py-2 text-xs font-medium cursor-pointer">$500</button>
+              <button type="button" data-val="1000"
+                class="preset-deposit-amount bg-[#152243] hover:bg-slate-700 text-white rounded-lg py-2 text-xs font-medium cursor-pointer">$1000</button>
+              <button type="button" data-val="5000"
+                class="preset-deposit-amount bg-[#152243] hover:bg-slate-700 text-white rounded-lg py-2 text-xs font-medium cursor-pointer">$5000</button>
+            </div>
+            <button type="submit"
+              class="w-full bg-indigo-650 hover:bg-indigo-600 text-white rounded-xl py-3.5 text-sm font-semibold transition-all cursor-pointer">Submit
+              Deposit</button>
+          </form>
+        </section>
+
+        <!-- WITHDRAW TAB -->
+        <section id="tab-withdraw"
+          class="tab-section hidden max-w-lg mx-auto bg-[#0d162d] border border-[#152243] p-6 rounded-2xl">
+          <h2 class="text-xl font-bold text-white mb-4">Request Withdrawal</h2>
+          <form id="withdraw-form" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Payout Amount (USD)</label>
+              <input type="number" required placeholder="Min 10.00"
+                class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
+            </div>
+            <button type="submit"
+              class="w-full bg-indigo-650 hover:bg-indigo-605 text-white rounded-xl py-3.5 text-sm font-semibold transition-all cursor-pointer">Request
+              Payout</button>
+          </form>
+        </section>
+
+        <!-- TEAM TAB -->
+        <section id="tab-team" class="tab-section hidden space-y-6">
+          <h2 class="text-xl font-bold text-white font-heading">Affiliate Program & Network</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl">
+              <h3 class="font-bold text-indigo-400">Level 01</h3>
+              <p class="text-2xl font-black text-white mt-2">0 Members</p>
+              <p class="text-xs text-slate-500 mt-1">Earn 10% daily commission</p>
+            </div>
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl">
+              <h3 class="font-bold text-emerald-450">Level 02</h3>
+              <p class="text-2xl font-black text-white mt-2">0 Members</p>
+              <p class="text-xs text-slate-500 mt-1">Earn 5% daily commission</p>
+            </div>
+            <div class="bg-[#0d162d] border border-[#152243] p-5 rounded-2xl">
+              <h3 class="font-bold text-amber-500">Level 03</h3>
+              <p class="text-2xl font-black text-white mt-2">0 Members</p>
+              <p class="text-xs text-slate-500 mt-1">Earn 2% daily commission</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- INVITE TAB -->
+        <section id="tab-invite"
+          class="tab-section hidden max-w-lg mx-auto bg-[#0d162d] border border-[#152243] p-6 rounded-2xl text-center space-y-4">
+          <h2 class="text-xl font-bold text-white">Invite & Earn Bonuses</h2>
+          <p class="text-sm text-slate-400">Share your referral link today and get free commission bonuses when friends
+            invest.</p>
+          <div id="user-referral-link"
+            class="bg-[#050a18] border border-[#152243] rounded-xl p-4 flex items-center justify-between text-xs font-mono text-indigo-300 select-all overflow-x-auto">
+            http://mybusiness.com/register?ref=03325700270
+          </div>
+          <button id="copy-invite-btn"
+            class="w-full bg-indigo-650 hover:bg-indigo-600 text-white rounded-xl py-3.5 text-sm font-semibold transition-all cursor-pointer">Copy
+            Referral Link</button>
+        </section>
+
+        <!-- PROFILE TAB -->
+        <section id="tab-profile" class="tab-section hidden max-w-xl mx-auto space-y-6">
+          <div class="bg-[#0d162d] border border-[#152243] p-6 rounded-2xl flex items-center gap-4">
+            <div id="user-profile-initial"
+              class="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white font-extrabold text-xl">
+              JS</div>
+            <div>
+              <h2 id="user-profile-name" class="text-lg font-bold text-white">John Smith</h2>
+              <p id="user-profile-meta" class="text-xs text-slate-450 font-medium font-mono">ID: 03325700270 | Member
+                since May 2024</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <button onclick="switchTab('deposit')"
+              class="bg-[#0d162d] border border-[#152243] p-4 rounded-xl text-center hover:border-slate-700 text-xs font-semibold cursor-pointer">📥
+              Recharge</button>
+            <button onclick="switchTab('withdraw')"
+              class="bg-[#0d162d] border border-[#152243] p-4 rounded-xl text-center hover:border-slate-700 text-xs font-semibold cursor-pointer">📤
+              Withdraw</button>
+            <button onclick="seeAllDeposits()"
+              class="bg-[#0d162d] border border-[#152243] p-4 rounded-xl text-center hover:border-slate-700 text-xs font-semibold cursor-pointer">📄
+              Deposits Log</button>
+            <button onclick="seeAllWithdraws()"
+              class="bg-[#0d162d] border border-[#152243] p-4 rounded-xl text-center hover:border-slate-700 text-xs font-semibold cursor-pointer">📄
+              Withdraws Log</button>
+            <button onclick="switchTab('invite')"
+              class="bg-[#0d162d] border border-[#152243] p-4 rounded-xl text-center hover:border-slate-700 text-xs font-semibold cursor-pointer">🔗
+              Share App</button>
+            <a href="#" onclick="window.logoutUser(); event.preventDefault();"
+              class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-center hover:bg-red-500/20 text-xs font-semibold block cursor-pointer">🚪
+              Logout</a>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Footer -->
+      <footer
+        class="border-t border-[#152243] bg-[#040813] py-5 px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 mt-auto">
+        <p>© 2024 My Business. All Rights Reserved.</p>
+        <div class="flex items-center gap-4">
+          <a href="#" class="hover:underline">Terms & Conditions</a>
+          <a href="#" class="hover:underline">Privacy Policy</a>
+        </div>
+      </footer>
+
+    </div>
+
+    <!-- Sticky Bottom Navigation for Mobile -->
+    <nav id="bottom-nav"
+      class="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#040813] border-t border-[#152243] flex items-center justify-around z-40 px-2 pb-safe">
+      <a href="#" data-tab="assets"
+        class="bottom-nav-link text-slate-450 flex flex-col items-center justify-center gap-1 w-12 text-[10px] font-medium transition-all">
+        <span class="text-lg">💼</span> Assets
+      </a>
+      <a href="#" data-tab="team"
+        class="bottom-nav-link text-slate-450 flex flex-col items-center justify-center gap-1 w-12 text-[10px] font-medium transition-all">
+        <span class="text-lg">👥</span> Team
+      </a>
+      <a href="#" data-tab="dashboard"
+        class="bottom-nav-link text-indigo-400 flex flex-col items-center justify-center gap-1 w-12 text-[10px] font-medium transition-all">
+        <span class="text-lg">📊</span> Home
+      </a>
+      <a href="#" data-tab="invite"
+        class="bottom-nav-link text-slate-450 flex flex-col items-center justify-center gap-1 w-12 text-[10px] font-medium transition-all">
+        <span class="text-lg">🎁</span> Invite
+      </a>
+      <a href="#" data-tab="profile"
+        class="bottom-nav-link text-slate-450 flex flex-col items-center justify-center gap-1 w-12 text-[10px] font-medium transition-all">
+        <span class="text-lg">👤</span> Personal
+      </a>
+    </nav>
+
+  </div> <!-- Close id="dashboard-layout" -->
+
+  <!-- Invest modal popup -->
+  <div id="invest-modal" class="fixed inset-0 bg-black/75 z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#0d162d] border border-[#152243] w-full max-w-sm rounded-2xl p-6 relative">
+      <button onclick="closeInvestModal()"
+        class="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer text-base">✕</button>
+      <h3 class="font-bold text-lg text-white mb-2">Confirm Investment</h3>
+      <p class="text-xs text-slate-400 leading-relaxed mb-4">You are planning to subscribe to <span
+          id="invest-plan-name" class="font-bold text-white"></span> plan for <span id="invest-plan-price"
+          class="font-bold text-white"></span>.</p>
+
+      <form id="invest-form" class="space-y-4">
+        <div>
+          <label class="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Account Balance</label>
+          <div id="invest-modal-balance"
+            class="text-sm font-bold text-slate-200 bg-[#050a18] border border-[#152243] px-3.5 py-2.5 rounded-xl">$0.00
+            USD</div>
+        </div>
+        <div id="invest-modal-error" class="text-xs text-red-400 font-medium">Insufficient balance to complete the
+          transaction. Please recharge.</div>
+        <div class="flex gap-2.5 pt-2">
+          <button type="button" onclick="closeInvestModal()"
+            class="flex-1 bg-[#152243] text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-slate-700 cursor-pointer">Cancel</button>
+          <button id="invest-modal-submit" type="submit" disabled
+            class="flex-1 bg-indigo-650 opacity-45 cursor-not-allowed text-white py-2.5 rounded-xl text-xs font-semibold">Confirm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Logs list modal popup -->
+  <div id="logs-modal" class="fixed inset-0 bg-black/75 z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#0d162d] border border-[#152243] w-full max-w-md rounded-2xl p-6 relative">
+      <button onclick="closeLogsModal()"
+        class="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer text-base">✕</button>
+      <h3 id="logs-modal-title" class="font-bold text-lg text-white mb-4">Logs</h3>
+      <div id="logs-modal-container" class="max-h-[300px] overflow-y-auto space-y-1 pr-1"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./js/slider.js"></script>
+  <script src="./js/app.js"></script>
+  <script>
+    // Global helper so child buttons can access switchTab easily
+    window.switchTab = function (tabId) {
+      const activeLink = document.querySelector(`.sidebar-link[data-tab="${tabId}"]`);
+      if (activeLink) {
+        activeLink.click();
+      } else {
+        const activeNav = document.querySelector(`.bottom-nav-link[data-tab="${tabId}"]`);
+        if (activeNav) activeNav.click();
+      }
+    }
+  </script>
+</body>
+
+</html>
