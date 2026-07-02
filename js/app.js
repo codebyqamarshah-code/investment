@@ -758,6 +758,15 @@ window.handleSignup = function(e) {
   errorBox.classList.add('hidden');
   successBox.classList.add('hidden');
   
+  const termsCheckbox = document.getElementById('signup-terms');
+  if (termsCheckbox && !termsCheckbox.checked) {
+    showAdvancedToast("Action Required", "Please accept the Terms of Service to continue.", "error");
+    errorBox.classList.remove('hidden');
+    errorBox.classList.add('animate-shake');
+    setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
+    return;
+  }
+  
   if (password.length < 6) {
     showAdvancedToast("Registration Failed", "Password must be at least 6 characters.", "error");
     errorBox.classList.remove('hidden');
