@@ -155,7 +155,7 @@
               <label class="block text-[11px] font-semibold text-slate-400">Password</label>
               <div class="relative">
                 <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔒</span>
-                <input type="password" id="signup-password" required pattern="(?=.*[A-Z]).{8,}" title="Must be at least 8 characters and include at least 1 Capital letter" placeholder="Min 8 chars, 1 Capital"
+                <input type="password" id="signup-password" required minlength="8" placeholder="Min 8 characters"
                   class="w-full bg-[#050a18] border border-[#152243] focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-200 outline-none transition-all duration-300">
                 <button type="button" onclick="window.togglePasswordVisibility('signup-password', this)"
                   class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-350 cursor-pointer text-xs select-none">👁️</button>
@@ -666,18 +666,26 @@
         <section id="tab-deposit"
           class="tab-section hidden max-w-lg mx-auto bg-[#0d162d] border border-[#152243] p-6 rounded-2xl">
           <h2 class="text-xl font-bold text-white mb-4">Make a Deposit</h2>
-          
-          <div class="bg-indigo-900/20 border border-indigo-500/30 p-6 flex flex-col items-center rounded-xl text-center">
-             <p class="text-slate-300 text-sm mb-5">Please transfer the amount manually to the designated agent account carefully:</p>
-             <div class="bg-indigo-950/80 w-full sm:w-3/4 p-5 rounded-2xl border border-indigo-500/50 text-center shadow-[0_0_20px_rgba(99,102,241,0.15)] mb-3 relative overflow-hidden group">
-                 <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                 <p class="text-[10px] text-indigo-300 uppercase tracking-widest font-black mb-1.5 opacity-80">Bank / Provider</p>
-                 <p class="text-lg font-bold text-emerald-400 mb-4">SadaPay</p>
-                 
-                 <p class="text-[10px] text-indigo-300 uppercase tracking-widest font-black mb-1.5 opacity-80">Account Number</p>
-                 <p class="text-3xl font-black text-white tracking-widest tabular-nums">03020463118</p>
-             </div>
-             <p class="text-xs text-slate-400 mt-6 leading-relaxed">Once you have successfully transferred the funds, your account will be manually credited shortly. Do not share your password with anyone.</p>
+
+          <div
+            class="bg-indigo-900/20 border border-indigo-500/30 p-6 flex flex-col items-center rounded-xl text-center">
+            <p class="text-slate-300 text-sm mb-5">Please transfer the amount manually to the designated agent account
+              carefully:</p>
+            <div
+              class="bg-indigo-950/80 w-full sm:w-3/4 p-5 rounded-2xl border border-indigo-500/50 text-center shadow-[0_0_20px_rgba(99,102,241,0.15)] mb-3 relative overflow-hidden group">
+              <div
+                class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              </div>
+              <p class="text-[10px] text-indigo-300 uppercase tracking-widest font-black mb-1.5 opacity-80">Bank /
+                Provider</p>
+              <p class="text-lg font-bold text-emerald-400 mb-4">SadaPay</p>
+
+              <p class="text-[10px] text-indigo-300 uppercase tracking-widest font-black mb-1.5 opacity-80">Account
+                Number</p>
+              <p class="text-3xl font-black text-white tracking-widest tabular-nums">03020463118</p>
+            </div>
+            <p class="text-xs text-slate-400 mt-6 leading-relaxed">Once you have successfully transferred the funds,
+              your account will be manually credited shortly. Do not share your password with anyone.</p>
           </div>
         </section>
 
@@ -691,10 +699,11 @@
               <input id="withdraw-amount-input" type="number" required placeholder="Min 10.00"
                 class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
             </div>
-            
+
             <div>
               <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select Withdraw Method</label>
-              <select id="withdraw-method-select" required class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
+              <select id="withdraw-method-select" required
+                class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
                 <option value="">Select Method</option>
                 <option value="JazzCash">JazzCash</option>
                 <option value="EasyPaisa">EasyPaisa</option>
@@ -702,13 +711,13 @@
                 <option value="Crypto">Crypto Wallet</option>
               </select>
             </div>
-            
+
             <div>
               <label class="block text-xs font-semibold text-slate-400 mb-1.5">Account Title / Name</label>
               <input id="withdraw-title-input" type="text" required placeholder="e.g. John Doe"
                 class="w-full bg-[#050a18] border border-[#152243] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500">
             </div>
-            
+
             <div>
               <label class="block text-xs font-semibold text-slate-400 mb-1.5">Account Number / IBAN</label>
               <input id="withdraw-account-input" type="text" required placeholder="03XXXXXXXXX / PK00..."

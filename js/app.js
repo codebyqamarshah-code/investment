@@ -635,7 +635,7 @@ function initSubPages() {
   if (withdrawForm) {
     withdrawForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const withdrawInput = withdrawForm.querySelector('input[type="number"]');
+      const withdrawInput = document.getElementById('withdraw-amount-input') || withdrawForm.querySelector('input[type="number"]');
       const amount = parseFloat(withdrawInput.value);
       
       if (isNaN(amount) || amount <= 0) {
@@ -862,22 +862,46 @@ window.handleSignup = async function(e) {
   const errorBox = document.getElementById('auth-error-box');
   const errorMsg = document.getElementById('auth-error-msg');
   
-  errorBox.classList.add('hidden');
-  
-  const termsCheckbox = document.getElementById('signup-terms');
-  if (termsCheckbox && !termsCheckbox.checked) {
-    showAdvancedToast("Action Required", "Please accept the Terms of Service to continue.", "error");
+  // Helper to show inline error
+  function showError(msg) {
+    errorMsg.textContent = msg;
     errorBox.classList.remove('hidden');
     errorBox.classList.add('animate-shake');
     setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
+  }
+  
+  errorBox.classList.add('hidden');
+  errorMsg.textContent = '';
+  
+  // --- Frontend Validation ---
+  if (!name) {
+    showError('Full name is required.');
+    showAdvancedToast("Missing Info", "Please enter your full name.", "error");
+    return;
+  }
+  
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showError('Please enter a valid email address.');
+    showAdvancedToast("Invalid Email", "Please enter a valid email address.", "error");
+    return;
+  }
+  
+  if (!password || password.length < 6) {
+    showError('Password must be at least 6 characters.');
+    showAdvancedToast("Weak Password", "Password must be at least 6 characters.", "error");
     return;
   }
   
   if (password !== confirmPassword) {
+    showError('Passwords do not match. Please re-enter.');
     showAdvancedToast("Passwords Mismatch", "Password and Confirm Password do not match.", "error");
-    errorBox.classList.remove('hidden');
-    errorBox.classList.add('animate-shake');
-    setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
+    return;
+  }
+  
+  const termsCheckbox = document.getElementById('signup-terms');
+  if (termsCheckbox && !termsCheckbox.checked) {
+    showError('You must accept the Terms of Service.');
+    showAdvancedToast("Action Required", "Please accept the Terms of Service to continue.", "error");
     return;
   }
   
@@ -899,10 +923,9 @@ window.handleSignup = async function(e) {
     const data = await res.json();
     
     if (!res.ok) {
-      showAdvancedToast("Registration Failed", data.error || data.errors[0].msg, "error");
-      errorBox.classList.remove('hidden');
-      errorBox.classList.add('animate-shake');
-      setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
+      const errMsg = data.error || (data.errors && data.errors[0] && data.errors[0].msg) || 'Registration failed. Please try again.';
+      showError(errMsg);
+      showAdvancedToast("Registration Failed", errMsg, "error");
       btn.removeAttribute('disabled');
       btnText.textContent = "Register Account";
       spinner.classList.add('hidden');
@@ -917,6 +940,7 @@ window.handleSignup = async function(e) {
     emailInput.value = '';
     passwordInput.value = '';
     confirmPasswordInput.value = '';
+    if (termsCheckbox) termsCheckbox.checked = false;
     
     btn.removeAttribute('disabled');
     btnText.textContent = "Register Account";
@@ -929,8 +953,10 @@ window.handleSignup = async function(e) {
     loadState();
     
   } catch (err) {
-    console.error(err);
-    showAdvancedToast("Server Error", "Could not connect to backend.", "error");
+    console.error('Signup fetch error:', err);
+    const netMsg = 'Could not connect to server. Please check your internet connection.';
+    showError(netMsg);
+    showAdvancedToast("Server Error", netMsg, "error");
     btn.removeAttribute('disabled');
     btnText.textContent = "Register Account";
     spinner.classList.add('hidden');
