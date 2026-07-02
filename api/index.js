@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
 const app = express();
 
@@ -81,7 +82,10 @@ let cachedDb = null;
 async function connectDB() {
   if (cachedDb && mongoose.connection.readyState === 1) return cachedDb;
   const MONGO_URI = process.env.MONGO_URI;
-  if (!MONGO_URI) throw new Error('MONGO_URI environment variable is not set!');
+  if (!MONGO_URI) {
+    console.error('Database connection error: MONGO_URI is missing');
+    throw new Error('MONGO_URI environment variable is not set!');
+  }
   cachedDb = await mongoose.connect(MONGO_URI, {
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,

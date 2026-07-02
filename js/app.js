@@ -91,11 +91,14 @@ function updateDOMUserInfo(name, email) {
   // Referral Link
   const elRef = document.getElementById('user-referral-link');
   if (elRef) {
-    elRef.innerHTML = `http://mybusiness.com/register?ref=${phone}`;
+    elRef.innerHTML = `http://mybusiness.com/register?ref=${email ? email.split('@')[0] : 'user'}`;
   }
 }
 
-const API_URL = '/api';
+// Smart API URL: localhost/local server or direct file protocol, otherwise relative path
+const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+  ? 'http://localhost:5000/api'
+  : '/api';
 
 
 
