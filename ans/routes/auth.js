@@ -15,27 +15,25 @@ const generateToken = (id) => {
 router.post('/register', [
   check('name', 'Name is required').not().isEmpty(),
   check('email', 'Please include a valid email').isEmail(),
-  check('phone', 'Phone number is required').not().isEmpty(),
   check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 })
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   
-  const { name, email, phone, password } = req.body;
+  const { name, email, password } = req.body;
   try {
-    let user = await User.findOne({ $or: [{ email }, { phone }] });
+    let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ error: 'User already exists with this email or phone' });
+      return res.status(400).json({ error: 'User already exists with this email' });
     }
     
-    user = new User({ name, email, phone, password });
+    user = new User({ name, email, password });
     await user.save();
     
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
-      phone: user.phone,
       role: user.role,
       token: generateToken(user._id)
     });
