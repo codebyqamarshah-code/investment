@@ -7,7 +7,7 @@ function showAdvancedToast(title, message, type = 'success') {
     toast = document.createElement('div');
     toast.id = 'advanced-toast';
     toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[100] transform -translate-y-20 opacity-0 transition-all duration-500 bg-[#0d162d]/95 backdrop-blur-2xl border rounded-2xl py-3.5 px-5 flex items-center gap-4 min-w-[300px] pointer-events-none shadow-2xl';
-    
+
     toast.innerHTML = `
       <div id="toast-icon-bg" class="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
         <span id="toast-icon" class="text-xl"></span>
@@ -22,7 +22,7 @@ function showAdvancedToast(title, message, type = 'success') {
 
   const iconBg = document.getElementById('toast-icon-bg');
   const icon = document.getElementById('toast-icon');
-  
+
   if (type === 'error') {
     toast.style.borderColor = 'rgba(239, 68, 68, 0.4)';
     toast.style.boxShadow = '0 10px 40px rgba(239, 68, 68, 0.25)';
@@ -123,7 +123,7 @@ function showAuthScreen(mode = 'login') {
 // Load state from backend on startup
 async function loadState() {
   const token = localStorage.getItem('my_business_token');
-  
+
   if (!token) {
     showAuthScreen('login');
     return;
@@ -131,19 +131,19 @@ async function loadState() {
 
   // Token exists → show dashboard IMMEDIATELY, load data in background
   showDashboard();
-  
+
   try {
     const userRes = await fetch(`${API_URL}/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    
+
     if (!userRes.ok) {
       // Token invalid → go back to login
       localStorage.removeItem('my_business_token');
       showAuthScreen('login');
       return;
     }
-    
+
     const currentUser = await userRes.json();
     updateDOMUserInfo(currentUser.name, currentUser.email);
 
@@ -152,7 +152,7 @@ async function loadState() {
       const walletRes = await fetch(`${API_URL}/wallet`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (walletRes.ok) {
         const walletData = await walletRes.json();
         appState.balance = walletData.wallet?.balance || 0;
@@ -160,27 +160,27 @@ async function loadState() {
         appState.totalWithdraw = walletData.wallet?.totalWithdraw || 0;
         appState.totalProfit = walletData.wallet?.totalProfit || 0;
         appState.lockedEarnings = walletData.wallet?.lockedEarnings || 0;
-        
+
         appState.deposits = (walletData.transactions || []).filter(t => t.type === 'deposit').map(t => ({
           name: currentUser.name,
           amount: t.amount,
           status: t.status === 'approved' ? 'Completed' : (t.status === 'rejected' ? 'Rejected' : 'Pending'),
           date: new Date(t.createdAt).toLocaleDateString()
         }));
-        
+
         appState.withdraws = (walletData.transactions || []).filter(t => t.type === 'withdraw').map(t => ({
           amount: t.amount,
           method: t.method,
           status: t.status === 'approved' ? 'Completed' : (t.status === 'rejected' ? 'Rejected' : 'Pending'),
           date: new Date(t.createdAt).toLocaleDateString()
         }));
-        
+
         updateUI();
       }
     } catch (walletErr) {
       console.warn('Wallet load failed (continuing):', walletErr);
     }
-    
+
   } catch (err) {
     console.error('Auth check failed:', err);
     // Network error - still keep dashboard open since token exists
@@ -267,35 +267,35 @@ function updateUI() {
 // Fetch payment methods dynamically
 async function loadPaymentMethods() {
   const token = localStorage.getItem('my_business_token');
-  if(!token) return;
+  if (!token) return;
   try {
     const res = await fetch(`${API_URL}/payment-methods`, { headers: { 'Authorization': `Bearer ${token}` } });
-    if(res.ok) {
-       const methods = await res.json();
-       const container = document.getElementById('deposit-methods-container');
-       const select = document.getElementById('deposit-method-select');
-       const details = document.getElementById('deposit-method-details');
-       if(methods.length > 0 && container) {
-          container.classList.remove('hidden');
-          select.innerHTML = '<option value="">Select a method...</option>';
-          methods.forEach(m => {
-             const op = document.createElement('option');
-             op.value = m.name;
-             op.textContent = m.name;
-             op.dataset.info = `<strong>Title:</strong> ${m.accountTitle}<br><strong>Account Number:</strong> ${m.accountNumber}<br><strong>IBAN:</strong> ${m.iban||'N/A'}<br><br><span class="text-xs text-indigo-300">${m.instructions||''}</span>`;
-             select.appendChild(op);
-          });
-          select.addEventListener('change', (e) => {
-             const opt = e.target.selectedOptions[0];
-             if(opt && opt.value) {
-                details.innerHTML = opt.dataset.info;
-             } else {
-                details.innerHTML = '';
-             }
-          });
-       }
+    if (res.ok) {
+      const methods = await res.json();
+      const container = document.getElementById('deposit-methods-container');
+      const select = document.getElementById('deposit-method-select');
+      const details = document.getElementById('deposit-method-details');
+      if (methods.length > 0 && container) {
+        container.classList.remove('hidden');
+        select.innerHTML = '<option value="">Select a method...</option>';
+        methods.forEach(m => {
+          const op = document.createElement('option');
+          op.value = m.name;
+          op.textContent = m.name;
+          op.dataset.info = `<strong>Title:</strong> ${m.accountTitle}<br><strong>Account Number:</strong> ${m.accountNumber}<br><strong>IBAN:</strong> ${m.iban || 'N/A'}<br><br><span class="text-xs text-indigo-300">${m.instructions || ''}</span>`;
+          select.appendChild(op);
+        });
+        select.addEventListener('change', (e) => {
+          const opt = e.target.selectedOptions[0];
+          if (opt && opt.value) {
+            details.innerHTML = opt.dataset.info;
+          } else {
+            details.innerHTML = '';
+          }
+        });
+      }
     }
-  } catch(e) { console.error(e); }
+  } catch (e) { console.error(e); }
 }
 
 // Document Load Listener
@@ -319,7 +319,7 @@ function initNavigation() {
   const sidebarOverlay = document.getElementById('sidebar-overlay');
 
   // Switch Tab Function
-  window.switchTabPanel = function(tabId) {
+  window.switchTabPanel = function (tabId) {
     // Hide all sections
     tabSections.forEach(section => {
       section.classList.add('hidden');
@@ -440,7 +440,7 @@ function initModals() {
 
     document.getElementById('invest-plan-name').textContent = planName;
     document.getElementById('invest-plan-price').textContent = priceStr;
-    
+
     // Set account balance in modal
     const elModalBalance = document.getElementById('invest-modal-balance');
     elModalBalance.textContent = `$${formatCurrency(appState.balance)} USD`;
@@ -476,11 +476,11 @@ function initModals() {
     if (!modal) return;
 
     document.getElementById('logs-modal-title').textContent = title;
-    
+
     // Fill the logs lists
     const container = document.getElementById('logs-modal-container');
     container.innerHTML = '';
-    
+
     data.forEach(item => {
       const row = document.createElement('div');
       row.className = 'flex justify-between items-center py-3 border-b border-slate-800 text-sm';
@@ -531,14 +531,14 @@ function initModals() {
   if (investForm) {
     investForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      
+
       if (appState.balance >= selectedPlanPrice) {
         appState.balance -= selectedPlanPrice;
         appState.lockedEarnings += selectedPlanPrice;
-        
+
         // Add to active profit or simulate incremental profit
         appState.totalProfit += (selectedPlanPrice * 0.11); // Add initial simulated profit
-        
+
         alert(`Investment of $${formatCurrency(selectedPlanPrice)} in ${selectedPlanName} completed successfully!`);
         closeInvestModal();
         saveState();
@@ -554,7 +554,7 @@ function initSubPages() {
   // Deposit Amount Input Actions
   const presetAmounts = document.querySelectorAll('.preset-deposit-amount');
   const depositInput = document.getElementById('deposit-amount-input');
-  
+
   if (presetAmounts && depositInput) {
     presetAmounts.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -562,7 +562,7 @@ function initSubPages() {
       });
     });
   }
-  
+
   // Deposit Request Form
   const depositForm = document.getElementById('deposit-form');
   if (depositForm) {
@@ -573,21 +573,21 @@ function initSubPages() {
         alert('Please enter a valid deposit amount.');
         return;
       }
-      
+
       const token = localStorage.getItem('my_business_token');
       if (!token) return;
-      
+
       const methodSelect = document.getElementById('deposit-method-select');
       const txnInput = document.getElementById('deposit-txn-input');
       const fileInput = document.getElementById('deposit-screenshot-input');
-      
+
       if (!fileInput || !fileInput.files[0]) {
-         alert("Please attach a screenshot of your payment.");
-         return;
+        alert("Please attach a screenshot of your payment.");
+        return;
       }
       if (!methodSelect || !methodSelect.value) {
-         alert("Please select a payment method.");
-         return;
+        alert("Please select a payment method.");
+        return;
       }
 
       const formData = new FormData();
@@ -608,15 +608,15 @@ function initSubPages() {
           headers: { 'Authorization': `Bearer ${token}` },
           body: formData
         });
-        
+
         btn.innerText = oldText;
         btn.disabled = false;
 
         if (res.ok) {
           alert(`Recharge request processed! Your deposit of $${formatCurrency(amount)} was submitted for review.`);
           depositInput.value = '';
-          if(txnInput) txnInput.value = '';
-          if(fileInput) fileInput.value = '';
+          if (txnInput) txnInput.value = '';
+          if (fileInput) fileInput.value = '';
           await loadState();
           window.switchTabPanel('dashboard');
         } else {
@@ -637,12 +637,12 @@ function initSubPages() {
       e.preventDefault();
       const withdrawInput = document.getElementById('withdraw-amount-input') || withdrawForm.querySelector('input[type="number"]');
       const amount = parseFloat(withdrawInput.value);
-      
+
       if (isNaN(amount) || amount <= 0) {
         alert('Please enter a valid withdrawal amount.');
         return;
       }
-      
+
       if (amount < 10) {
         alert('Minimum withdrawal amount is $10.00.');
         return;
@@ -652,22 +652,22 @@ function initSubPages() {
         alert(`Insufficient funds. Your current withdrawable balance is $${formatCurrency(appState.balance)}.`);
         return;
       }
-      
+
       const token = localStorage.getItem('my_business_token');
       if (!token) return;
 
       const methodSelect = document.getElementById('withdraw-method-select');
       const titleInput = document.getElementById('withdraw-title-input');
       const accountInput = document.getElementById('withdraw-account-input');
-      
+
       const payload = {
-         amount,
-         methodName: methodSelect ? methodSelect.value : 'Bank Transfer',
-         accountTitle: titleInput ? titleInput.value : 'N/A',
-         accountNumber: accountInput ? accountInput.value : 'N/A',
-         notes: 'Requested via UI'
+        amount,
+        methodName: methodSelect ? methodSelect.value : 'Bank Transfer',
+        accountTitle: titleInput ? titleInput.value : 'N/A',
+        accountNumber: accountInput ? accountInput.value : 'N/A',
+        notes: 'Requested via UI'
       };
-      
+
       try {
         const btn = e.target.querySelector('button[type="submit"]');
         const oldText = btn.innerText;
@@ -676,21 +676,21 @@ function initSubPages() {
 
         const res = await fetch(`${API_URL}/wallet/withdraw`, {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify(payload)
         });
-        
+
         btn.innerText = oldText;
         btn.disabled = false;
 
         if (res.ok) {
           alert(`Withdrawal request processed. $${formatCurrency(amount)} was submitted!`);
           withdrawInput.value = '';
-          if(titleInput) titleInput.value = '';
-          if(accountInput) accountInput.value = '';
+          if (titleInput) titleInput.value = '';
+          if (accountInput) accountInput.value = '';
           methodSelect.value = '';
           await loadState();
           window.switchTabPanel('dashboard');
@@ -707,7 +707,7 @@ function initSubPages() {
 }
 
 // Open deposits log see all
-window.seeAllDeposits = function() {
+window.seeAllDeposits = function () {
   const formattedLogs = appState.deposits.map(dep => ({
     col1: dep.name,
     col2: `$${formatCurrency(dep.amount)}`,
@@ -718,7 +718,7 @@ window.seeAllDeposits = function() {
 };
 
 // Open withdraws log see all
-window.seeAllWithdraws = function() {
+window.seeAllWithdraws = function () {
   const formattedLogs = appState.withdraws.map(wd => ({
     col1: `${wd.method} Payout`,
     col2: `$${formatCurrency(wd.amount)}`,
@@ -729,43 +729,43 @@ window.seeAllWithdraws = function() {
 };
 
 // Auth Tab switching switcher (Login / Signup)
-window.toggleAuthMode = function(mode) {
+window.toggleAuthMode = function (mode) {
   const slider = document.getElementById('auth-form-slider');
   const glow = document.getElementById('auth-tab-glow');
   const btnLogin = document.getElementById('tab-login');
   const btnSignup = document.getElementById('tab-signup');
   const subtitle = document.getElementById('auth-subtitle');
-  
+
   // Clear any existing errors
   document.getElementById('auth-error-box').classList.add('hidden');
-  
+
   if (mode === 'login') {
     slider.style.transform = 'translateX(0)';
     glow.style.left = '4px';
-    
+
     // Select styling Classes
     btnLogin.classList.add('text-white');
     btnLogin.classList.remove('text-slate-500');
     btnSignup.classList.add('text-slate-500');
     btnSignup.classList.remove('text-white');
-    
+
     subtitle.textContent = "Login to your dashboard to manage capital operations";
   } else {
     slider.style.transform = 'translateX(-50%)';
     glow.style.left = 'calc(50% + 2px)';
-    
+
     // Select styling Classes
     btnLogin.classList.add('text-slate-500');
     btnLogin.classList.remove('text-white');
     btnSignup.classList.add('text-white');
     btnSignup.classList.remove('text-slate-500');
-    
+
     subtitle.textContent = "Create your new account to start investing today";
   }
 };
 
 // Password Visibility toggle switcher
-window.togglePasswordVisibility = function(inputId, btn) {
+window.togglePasswordVisibility = function (inputId, btn) {
   const input = document.getElementById(inputId);
   if (input) {
     if (input.type === 'password') {
@@ -779,37 +779,37 @@ window.togglePasswordVisibility = function(inputId, btn) {
 };
 
 // Login submit handler
-window.handleLogin = async function(e) {
+window.handleLogin = async function (e) {
   e.preventDefault();
-  
+
   const emailInput = document.getElementById('login-email');
   const passwordInput = document.getElementById('login-password');
-  
+
   const email = emailInput.value.trim().toLowerCase();
   const password = passwordInput.value;
-  
+
   const errorBox = document.getElementById('auth-error-box');
   const errorMsg = document.getElementById('auth-error-msg');
-  
+
   errorBox.classList.add('hidden');
-  
+
   const btn = e.target.querySelector('button[type="submit"]');
   const btnText = btn.querySelector('.btn-text');
   const spinner = btn.querySelector('.spinner');
-  
+
   btn.setAttribute('disabled', 'true');
   btnText.textContent = "Verifying...";
   spinner.classList.remove('hidden');
-  
+
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    
+
     const data = await res.json();
-    
+
     if (!res.ok) {
       showAdvancedToast("Login Failed", data.error || data.errors[0].msg, "error");
       errorMsg.textContent = data.error || data.errors[0].msg;
@@ -821,21 +821,21 @@ window.handleLogin = async function(e) {
       spinner.classList.add('hidden');
       return;
     }
-    
+
     // Success
     showAdvancedToast("Welcome Back!", "Successfully logged in to your account.", "success");
     localStorage.setItem('my_business_token', data.token);
-    
+
     btn.removeAttribute('disabled');
     btnText.textContent = "Sign In";
     spinner.classList.add('hidden');
-    
+
     // Show dashboard immediately — no waiting
     showDashboard();
-    
+
     // Load user data in background
     loadState();
-    
+
   } catch (err) {
     console.error(err);
     showAdvancedToast("Server Error", "Could not connect to backend.", "error");
@@ -846,22 +846,22 @@ window.handleLogin = async function(e) {
 };
 
 // Signup registration submit handler
-window.handleSignup = async function(e) {
+window.handleSignup = async function (e) {
   e.preventDefault();
-  
+
   const nameInput = document.getElementById('signup-name');
   const emailInput = document.getElementById('signup-email');
   const passwordInput = document.getElementById('signup-password');
   const confirmPasswordInput = document.getElementById('signup-confirm-password');
-  
+
   const name = nameInput.value.trim();
   const email = emailInput.value.trim().toLowerCase();
   const password = passwordInput.value;
   const confirmPassword = confirmPasswordInput.value;
-  
+
   const errorBox = document.getElementById('auth-error-box');
   const errorMsg = document.getElementById('auth-error-msg');
-  
+
   // Helper to show inline error
   function showError(msg) {
     errorMsg.textContent = msg;
@@ -869,137 +869,171 @@ window.handleSignup = async function(e) {
     errorBox.classList.add('animate-shake');
     setTimeout(() => errorBox.classList.remove('animate-shake'), 400);
   }
-  
+
+  // Clear previous errors
   errorBox.classList.add('hidden');
   errorMsg.textContent = '';
-  
+
   // --- Frontend Validation ---
   if (!name) {
     showError('Full name is required.');
     showAdvancedToast("Missing Info", "Please enter your full name.", "error");
     return;
   }
-  
+
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     showError('Please enter a valid email address.');
     showAdvancedToast("Invalid Email", "Please enter a valid email address.", "error");
     return;
   }
-  
+
   if (!password || password.length < 6) {
     showError('Password must be at least 6 characters.');
     showAdvancedToast("Weak Password", "Password must be at least 6 characters.", "error");
     return;
   }
-  
+
   if (password !== confirmPassword) {
     showError('Passwords do not match. Please re-enter.');
     showAdvancedToast("Passwords Mismatch", "Password and Confirm Password do not match.", "error");
     return;
   }
-  
+
   const termsCheckbox = document.getElementById('signup-terms');
   if (termsCheckbox && !termsCheckbox.checked) {
     showError('You must accept the Terms of Service.');
     showAdvancedToast("Action Required", "Please accept the Terms of Service to continue.", "error");
     return;
   }
-  
+
   const btn = e.target.querySelector('button[type="submit"]');
   const btnText = btn.querySelector('.btn-text');
   const spinner = btn.querySelector('.spinner');
-  
+
   btn.setAttribute('disabled', 'true');
   btnText.textContent = "Creating Account...";
-  spinner.classList.remove('hidden');
-  
+  if (spinner) spinner.classList.remove('hidden');
+
   try {
+    console.log('[Signup] Sending request to:', `${API_URL}/auth/register`);
+    console.log('[Signup] Payload:', { name, email, passwordLength: password.length });
+
     const res = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
     });
-    
-    const data = await res.json();
-    
+
+    console.log('[Signup] Response status:', res.status);
+
+    let data;
+    try {
+      data = await res.json();
+      console.log('[Signup] Response data:', data);
+    } catch (jsonErr) {
+      console.error('[Signup] Failed to parse JSON response:', jsonErr);
+      const rawText = await res.text().catch(() => 'No response body');
+      console.error('[Signup] Raw response:', rawText);
+      const errMsg = 'Server error - invalid response. Please try again.';
+      showError(errMsg);
+      showAdvancedToast("Server Error", errMsg, "error");
+      btn.removeAttribute('disabled');
+      btnText.textContent = "Register Account";
+      if (spinner) spinner.classList.add('hidden');
+      return;
+    }
+
     if (!res.ok) {
-      const errMsg = data.error || (data.errors && data.errors[0] && data.errors[0].msg) || 'Registration failed. Please try again.';
+      const errMsg = data.error || (data.errors && data.errors[0] && data.errors[0].msg) || `Registration failed (${res.status}). Please try again.`;
+      console.error('[Signup] Registration error:', errMsg);
       showError(errMsg);
       showAdvancedToast("Registration Failed", errMsg, "error");
       btn.removeAttribute('disabled');
       btnText.textContent = "Register Account";
-      spinner.classList.add('hidden');
+      if (spinner) spinner.classList.add('hidden');
       return;
     }
-    
+
+    if (!data.token) {
+      const errMsg = 'Registration failed  no token received. Please try again.';
+      console.error('[Signup] No token in response:', data);
+      showError(errMsg);
+      showAdvancedToast("Error", errMsg, "error");
+      btn.removeAttribute('disabled');
+      btnText.textContent = "Register Account";
+      if (spinner) spinner.classList.add('hidden');
+      return;
+    }
+
+    console.log('[Signup] Registration SUCCESS! Token received.');
     showAdvancedToast("Account Created!", "Registration successful. Entering dashboard...", "success");
     localStorage.setItem('my_business_token', data.token);
-    
-    // Clean forms immediately
+
+    // Clean forms
     nameInput.value = '';
     emailInput.value = '';
     passwordInput.value = '';
     confirmPasswordInput.value = '';
     if (termsCheckbox) termsCheckbox.checked = false;
-    
+
     btn.removeAttribute('disabled');
     btnText.textContent = "Register Account";
-    spinner.classList.add('hidden');
+    if (spinner) spinner.classList.add('hidden');
 
-    // Show dashboard immediately — no waiting
+    // Show dashboard
     showDashboard();
-    
+
     // Load user data in background
     loadState();
-    
+
   } catch (err) {
-    console.error('Signup fetch error:', err);
-    const netMsg = 'Could not connect to server. Please check your internet connection.';
+    console.error('[Signup] Network/fetch error:', err);
+    const netMsg = 'Could not connect to server. Please check your internet connection and try again.';
     showError(netMsg);
-    showAdvancedToast("Server Error", netMsg, "error");
+    showAdvancedToast("Connection Error", netMsg, "error");
     btn.removeAttribute('disabled');
     btnText.textContent = "Register Account";
-    spinner.classList.add('hidden');
+    if (spinner) spinner.classList.add('hidden');
   }
 };
 
 // Logout session user handler
-window.logoutUser = function() {
+window.logoutUser = function () {
   const confirmLogout = confirm("Are you sure you want to log out of your session?");
   if (!confirmLogout) return;
-  
+
   const authLayout = document.getElementById('auth-layout');
   const dashLayout = document.getElementById('dashboard-layout');
-  
+
   // Transition out dashboard
   dashLayout.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
   dashLayout.style.opacity = '0';
   dashLayout.style.transform = 'scale(1.04)';
-  
+
   setTimeout(() => {
     // Clear session
     localStorage.removeItem('my_business_token');
-    
+
     dashLayout.classList.add('hidden');
-    
+
     // Clean input blocks
     document.getElementById('login-email').value = '';
     document.getElementById('login-password').value = '';
-    
+
     // Hide error cards
     document.getElementById('auth-error-box').classList.add('hidden');
-    
+
     // Prepare auth page
     authLayout.classList.remove('hidden');
     authLayout.style.opacity = '0';
     authLayout.style.transform = 'scale(0.96)';
-    
+
     setTimeout(() => {
       authLayout.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
       authLayout.style.opacity = '1';
       authLayout.style.transform = 'scale(1)';
     }, 50);
-    
+
   }, 500);
 };
 
