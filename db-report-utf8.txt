@@ -1,0 +1,19 @@
+﻿
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ    MONGODB studentAuth - DATABASE REPORT     Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+≡ƒôª Collections: users, transactions, contacts, paymentmethods, withdraws, deposits
+
+≡ƒæñ USERS (1):
+  [1] testuser | testuser@gmail.com | role: admin | status: active
+       wallet: balance=0, totalDeposit=0
+
+≡ƒÆ│ PAYMENT METHODS (1):
+  [1] SadaPay | Qamar Shah | 03020463118 | active: true
+
+≡ƒôÑ Deposits       : 0
+≡ƒôñ Withdrawals    : 0
+≡ƒöä Transactions   : 0
+
+Γ£à MongoDB is LIVE and working at: mongodb://localhost:27017/studentAuth
