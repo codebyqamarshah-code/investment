@@ -1,17 +1,43 @@
 {
   "version": 2,
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.js"
+      "src": "api/index.js",
+      "use": "@vercel/node"
     },
     {
-      "source": "/admin-panel",
-      "destination": "/admin-panel.html"
+      "src": "*.html",
+      "use": "@vercel/static"
     },
     {
-      "source": "/admin-panel/",
-      "destination": "/admin-panel.html"
+      "src": "css/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "js/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "assets/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/admin-panel",
+      "dest": "/admin-panel.html"
+    },
+    {
+      "src": "/admin-panel/",
+      "dest": "/admin-panel.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

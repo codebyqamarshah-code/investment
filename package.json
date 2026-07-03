@@ -1,4 +1,7 @@
 {
+  "name": "investment-portal",
+  "version": "1.0.0",
+  "main": "api/index.js",
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
