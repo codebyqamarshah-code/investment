@@ -394,13 +394,13 @@ app.post('/api/admin/payment-methods', authMiddleware, adminMiddleware, async (r
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Serve frontend static files from root directory (for local development)
-app.use(express.static(path.join(__dirname, '../')));
+// Serve frontend static files from public directory (local development & fallback)
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Fallback to index.html for SPA routing if needed
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(__dirname, '../index.html'));
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Error handling middleware
