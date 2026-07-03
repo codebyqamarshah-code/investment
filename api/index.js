@@ -41,17 +41,26 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploads as static
 app.use('/uploads', express.static(UPLOADS_DIR));
 
-// DB Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/studentAuth')
-  .then(async () => {
-    console.log("MongoDB Connected (studentAuth)");
+// DB Connection - Cached for Vercel serverless environment
+let isConnected = false;
+
+async function connectDB() {
+  if (isConnected && mongoose.connection.readyState === 1) {
+    return;
+  }
+  try {
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/studentAuth', {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
+    isConnected = true;
+    console.log("✅ MongoDB Connected");
+
     // Drop outdated username index to fix registration E11000 error
     try {
       await mongoose.connection.db.collection('users').dropIndex('username_1');
-      console.log('Dropped stale username_1 index in database');
-    } catch (indexErr) {
-      // Ignore if index doesn't exist
-    }
+      console.log('Dropped stale username_1 index');
+    } catch (indexErr) { /* Ignore if doesn't exist */ }
 
     // Auto-seed SadaPay payment method if none exists
     try {
@@ -65,11 +74,29 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/studentAuth
         });
         console.log('🌱 Seeded default payment method (SadaPay)');
       }
-    } catch (seedErr) {
-      console.error('Failed to seed SadaPay:', seedErr);
+    } catch (seedErr) { console.error('Seed error:', seedErr); }
+
+  } catch (err) {
+    console.error("❌ MongoDB Connection Error:", err.message);
+    isConnected = false;
+    throw err;
+  }
+}
+
+// Connect immediately on startup
+connectDB().catch(console.error);
+
+// Middleware to ensure DB is connected on every request
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (err) {
+      return res.status(503).json({ error: 'Database connection failed. Please try again.' });
     }
-  })
-  .catch(err => console.log("MongoDB Error: ", err));
+  }
+  next();
+});
 
 // Multer Storage for Uploads
 const storage = multer.diskStorage({
