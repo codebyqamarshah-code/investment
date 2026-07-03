@@ -4,22 +4,6 @@
     {
       "src": "api/index.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "css/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "js/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "assets/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -34,6 +18,9 @@
     {
       "src": "/admin-panel/",
       "dest": "/admin-panel.html"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
