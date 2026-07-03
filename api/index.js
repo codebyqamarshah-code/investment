@@ -80,17 +80,45 @@ const paymentMethodSchema = new mongoose.Schema({
 let cachedDb = null;
 
 async function connectDB() {
+  // If already connected, reuse connection (important for Vercel serverless)
   if (cachedDb && mongoose.connection.readyState === 1) return cachedDb;
-  const MONGO_URI = process.env.MONGO_URI;
-  if (!MONGO_URI) {
-    console.error('Database connection error: MONGO_URI is missing');
-    throw new Error('MONGO_URI environment variable is not set!');
+
+  // Reset if connection dropped
+  if (mongoose.connection.readyState !== 0) {
+    cachedDb = null;
   }
-  cachedDb = await mongoose.connect(MONGO_URI, {
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-  });
-  return cachedDb;
+
+  let MONGO_URI = process.env.MONGO_URI;
+  if (!MONGO_URI) {
+    // Falls back to local database if running locally
+    MONGO_URI = 'mongodb://127.0.0.1:27017/studentAuth';
+    console.warn('MONGO_URI env var is missing. Falling back to local db:', MONGO_URI);
+  }
+
+  try {
+    cachedDb = await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 15000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      retryWrites: true,
+      w: 'majority'
+    });
+    console.log('MongoDB connected successfully');
+    
+    // Drop outdated username index to fix registration E11000 error
+    try {
+      await mongoose.connection.db.collection('users').dropIndex('username_1');
+      console.log('Dropped stale username_1 index');
+    } catch (indexErr) {
+      // Ignore error if index doesn't exist
+    }
+
+    return cachedDb;
+  } catch (err) {
+    cachedDb = null;
+    console.error('MongoDB connection failed:', err.message);
+    throw new Error('Database connection failed. Please try again.');
+  }
 }
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);

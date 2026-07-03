@@ -368,7 +368,7 @@ function initNavigation() {
       e.preventDefault();
       const tabId = link.getAttribute('data-tab');
       if (tabId === 'logout') {
-        alert('Logging out...');
+        window.logoutUser();
         return;
       }
       window.switchTabPanel(tabId);
@@ -1002,41 +1002,24 @@ window.handleSignup = async function (e) {
 
 // Logout session user handler
 window.logoutUser = function () {
-  const confirmLogout = confirm("Are you sure you want to log out of your session?");
-  if (!confirmLogout) return;
-
-  const authLayout = document.getElementById('auth-layout');
   const dashLayout = document.getElementById('dashboard-layout');
 
-  // Transition out dashboard
-  dashLayout.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-  dashLayout.style.opacity = '0';
-  dashLayout.style.transform = 'scale(1.04)';
+  // Smooth fade out animation
+  if (dashLayout) {
+    dashLayout.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+    dashLayout.style.opacity = '0';
+    dashLayout.style.transform = 'scale(1.03)';
+  }
 
   setTimeout(() => {
-    // Clear session
+    // Clear all session data
     localStorage.removeItem('my_business_token');
+    localStorage.removeItem('my_business_user');
+    sessionStorage.clear();
 
-    dashLayout.classList.add('hidden');
-
-    // Clean input blocks
-    document.getElementById('login-email').value = '';
-    document.getElementById('login-password').value = '';
-
-    // Hide error cards
-    document.getElementById('auth-error-box').classList.add('hidden');
-
-    // Prepare auth page
-    authLayout.classList.remove('hidden');
-    authLayout.style.opacity = '0';
-    authLayout.style.transform = 'scale(0.96)';
-
-    setTimeout(() => {
-      authLayout.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-      authLayout.style.opacity = '1';
-      authLayout.style.transform = 'scale(1)';
-    }, 50);
-
-  }, 500);
+    // Reload page — this will show login form automatically
+    // because loadState() checks for token and calls showAuthScreen()
+    window.location.reload();
+  }, 400);
 };
 

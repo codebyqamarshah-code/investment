@@ -161,10 +161,10 @@
 
             <!-- Login Form (Hidden initially) -->
             <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="hidden text-left mt-6 space-y-4">
-                <p class="text-xs text-indigo-400 mb-4 bg-indigo-500/10 p-2 rounded border border-indigo-500/20">System detects no backend. Please enter any email and password to enter UI DEMO mode securely.</p>
+                <p class="text-xs text-indigo-400 mb-4 bg-indigo-500/10 p-2 rounded border border-indigo-500/20"><i class='bx bx-info-circle mr-1'></i>Enter your administrator credentials to continue.</p>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5">Admin Email</label>
-                    <input type="email" id="adminEmail" required class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-lg px-4 py-3 text-white outline-none text-sm transition" placeholder="admin@mybusiness.com">
+                    <input type="email" id="adminEmail" required class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-lg px-4 py-3 text-white outline-none text-sm transition" placeholder="admin@gmail.com">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5">Master Password</label>
@@ -565,8 +565,10 @@
 
     <!-- MAIN JAVASCRIPT FOR ENTERPRISE FUNCTIONALITY -->
     <script>
-        // CONFIGURATION
-        const API_BASE = 'http://localhost:5000/api/admin'; 
+        // CONFIGURATION — auto-detect local vs live
+        const IS_LOCAL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:');
+        const API_ROOT = IS_LOCAL ? 'http://localhost:5000/api' : '/api';
+        const API_BASE = API_ROOT + '/admin';
         let currentToken = localStorage.getItem('adminToken');
         let socket = null;
 
@@ -619,7 +621,7 @@
             document.getElementById('auth-loader').style.display = 'block';
 
             try {
-                const res = await fetch('http://localhost:5000/api/admin/login', {
+                const res = await fetch(API_ROOT + '/admin/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -676,6 +678,7 @@
         // REAL-TIME SOCKET.IO LOGIC
         function initSocketConnection() {
             try {
+                if (!IS_LOCAL) return; // Socket only on local server; skip on Vercel (serverless)
                 socket = io('http://localhost:5000', {
                     auth: { token: currentToken }
                 });
@@ -910,7 +913,7 @@
                 }).then(async (result) => {
                     if(result.isConfirmed && result.value.amount) {
                         try {
-                            const res = await fetch(`http://localhost:5000/api/admin/users/${id}/adjust-wallet`, {
+                            const res = await fetch(`${API_BASE}/users/${id}/adjust-wallet`, {
                                 method: 'POST',
                                 headers: { 
                                     'Content-Type': 'application/json',
@@ -959,7 +962,7 @@
                 }).then(async (result) => {
                     if (result.isConfirmed) {
                         try {
-                            const res = await fetch(`http://localhost:5000/api/admin/users/${id}/toggle-status`, {
+                            const res = await fetch(`${API_BASE}/users/${id}/toggle-status`, {
                                 method: 'POST',
                                 headers: { 'Authorization': `Bearer ${token}` }
                             });
@@ -1006,7 +1009,7 @@
             tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-16 text-center"><div class="loader w-8 h-8 mx-auto mb-4 border-t-indigo-500"></div><p class="text-slate-400">Querying DB...</p></td></tr>`;
             try {
                 const token = localStorage.getItem('adminToken');
-                const res = await fetch(`http://localhost:5000/api/admin/deposits`, {
+                const res = await fetch(`${API_BASE}/deposits`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if(res.ok) {
@@ -1044,9 +1047,7 @@
                                 <p class="text-[10px] text-slate-500 font-mono">Ref: ${dep.transactionId || 'N/A'}</p>
                             </td>
                             <td class="px-5 py-4">
-                                <a href="http://localhost:5000/uploads/${dep.receiptImage}" target="_blank" class="text-indigo-400 font-semibold hover:underline flex items-center gap-1">
-                                    <i class='bx bx-image-alt text-lg'></i> View Receipt
-                                </a>
+                                <span class="text-slate-500 text-xs italic">${dep.transactionId ? 'Ref: ' + dep.transactionId : 'No receipt'}</span>
                             </td>
                             <td class="px-5 py-4 text-center">${statusBadge}</td>
                             <td class="px-5 py-4 text-right">${actionsHtml}</td>
@@ -1075,7 +1076,7 @@
                 }).then(async (result) => {
                     if(result.isConfirmed) {
                         try {
-                            const res = await fetch(`http://localhost:5000/api/admin/deposits/${id}/approve`, {
+                            const res = await fetch(`${API_BASE}/deposits/${id}/approve`, {
                                 method: 'POST',
                                 headers: { 'Authorization': `Bearer ${token}` }
                             });
@@ -1105,7 +1106,7 @@
                 }).then(async (result) => {
                     if(result.isConfirmed) {
                         try {
-                            const res = await fetch(`http://localhost:5000/api/admin/deposits/${id}/reject`, {
+                            const res = await fetch(`${API_BASE}/deposits/${id}/reject`, {
                                 method: 'POST',
                                 headers: { 
                                     'Content-Type': 'application/json',
@@ -1130,7 +1131,7 @@
             tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-16 text-center"><div class="loader w-8 h-8 mx-auto mb-4 border-t-indigo-500"></div><p class="text-slate-400">Querying DB...</p></td></tr>`;
             try {
                 const token = localStorage.getItem('adminToken');
-                const res = await fetch(`http://localhost:5000/api/admin/withdraws`, {
+                const res = await fetch(`${API_BASE}/withdraws`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if(res.ok) {
@@ -1195,7 +1196,7 @@
                 }).then(async (result) => {
                     if(result.isConfirmed) {
                         try {
-                            const res = await fetch(`http://localhost:5000/api/admin/withdraws/${id}/approve`, {
+                            const res = await fetch(`${API_BASE}/withdraws/${id}/approve`, {
                                 method: 'POST',
                                 headers: { 'Authorization': `Bearer ${token}` }
                             });
@@ -1228,7 +1229,7 @@
                 }).then(async (result) => {
                     if(result.isConfirmed) {
                         try {
-                            const res = await fetch(`http://localhost:5000/api/admin/withdraws/${id}/reject`, {
+                            const res = await fetch(`${API_BASE}/withdraws/${id}/reject`, {
                                 method: 'POST',
                                 headers: { 
                                     'Content-Type': 'application/json',
@@ -1253,7 +1254,7 @@
             tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-16 text-center"><div class="loader w-8 h-8 mx-auto mb-4 border-t-indigo-500"></div><p class="text-slate-400">Querying DB...</p></td></tr>`;
             try {
                 const token = localStorage.getItem('adminToken');
-                const res = await fetch(`http://localhost:5000/api/admin/transactions`, {
+                const res = await fetch(`${API_BASE}/transactions`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if(res.ok) {

@@ -26,8 +26,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // DB Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ans_backend')
-  .then(() => console.log("MongoDB Connected (ans_backend)"))
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/studentAuth')
+  .then(async () => {
+    console.log("MongoDB Connected (studentAuth)");
+    // Drop outdated username index to fix registration E11000 error
+    try {
+      await mongoose.connection.db.collection('users').dropIndex('username_1');
+      console.log('Dropped stale username_1 index in ans backend');
+    } catch (indexErr) {
+      // Ignore if index doesn't exist
+    }
+  })
   .catch(err => console.log("MongoDB Error: ", err));
 
 // Multer Storage
